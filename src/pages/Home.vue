@@ -94,23 +94,26 @@
                   variant="primary"
                   size="lg"
                   @click="handleSearch"
+                  :loading="loading"
+                  :disabled="loading"
                   class="px-12"
                 >
                   <MagnifyingGlassIcon class="h-5 w-5 mr-2" />
-                  Search Flights
+                  {{ loading ? 'Searching...' : 'Search Flights' }}
                 </Button>
               </div>
             </form>
           </div>
 
           <!-- Recent Searches -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div v-if="recentSearches.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Searches</h2>
             <div class="space-y-3">
               <div
                 v-for="search in recentSearches"
                 :key="search.id"
                 class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                @click="handleRecentSearch(search)"
               >
                 <div class="flex items-center space-x-4">
                   <div class="text-sm">
@@ -118,13 +121,31 @@
                       {{ search.origin }} → {{ search.destination }}
                     </div>
                     <div class="text-gray-500">
-                      {{ search.departureDate }} • {{ search.passengers }} passenger{{ search.passengers > 1 ? 's' : '' }}
+                      {{ formatDate(search.departureDate) }} • {{ search.passengers }} passenger{{ search.passengers > 1 ? 's' : '' }} • {{ search.cabinClass }}
                     </div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" @click.stop="handleRecentSearch(search)">
                   Search Again
                 </Button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Popular Destinations -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Popular Destinations</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div
+                v-for="destination in popularDestinations"
+                :key="destination.code"
+                class="text-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                @click="selectDestination(destination)"
+              >
+                <div class="text-2xl mb-2">{{ destination.flag }}</div>
+                <div class="font-medium text-gray-900">{{ destination.city }}</div>
+                <div class="text-sm text-gray-500">{{ destination.code }}</div>
+                <div class="text-xs text-green-600 mt-1">from ${{ destination.price }}</div>
               </div>
             </div>
           </div>
@@ -135,8 +156,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useFlightsStore } from '@/store/flights'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
 import Button from '@/components/ui/Button.vue'
@@ -145,8 +167,10 @@ import Select from '@/components/ui/Select.vue'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
+const flightsStore = useFlightsStore()
 
 const isMobileMenuOpen = ref(false)
+const loading = ref(false)
 
 const searchForm = ref({
   tripType: 'round-trip',
@@ -173,25 +197,88 @@ const cabinOptions = [
   { value: 'first', label: 'First Class' }
 ]
 
-const recentSearches = ref([
-  {
-    id: 1,
-    origin: 'NYC',
-    destination: 'LON',
-    departureDate: '2024-03-15',
-    passengers: 2
-  },
-  {
-    id: 2,
-    origin: 'LAX',
-    destination: 'PAR',
-    departureDate: '2024-04-20',
-    passengers: 1
+const recentSearches = computed(() => {
+  return flightsStore.getRecentSearches().slice(0, 5)
+})
+
+const handleSearch = async () => {
+  // Validate form
+  if (!searchForm.value.origin || !searchForm.value.destination || !searchForm.value.departureDate) {
+    alert('Please fill in all required fields')
+    return
   }
+
+  loading.value = true
+  
+  try {
+    const searchCriteria = {
+      ...searchForm.value,
+      passengers: parseInt(searchForm.value.passengers)
+    }
+    
+    const result = await flightsStore.searchFlights(searchCriteria)
+    
+    if (result.success) {
+      router.push('/search')
+    } else {
+      alert(result.error || 'Search failed. Please try again.')
+    }
+  } catch (error) {
+    console.error('Search error:', error)
+    alert('Search failed. Please try again.')
+  } finally {
+    loading.value = false
+  }
+}
+
+const popularDestinations = ref([
+  { code: 'LHR', city: 'London', flag: '🇬🇧', price: 450 },
+  { code: 'CDG', city: 'Paris', flag: '🇫🇷', price: 380 },
+  { code: 'NRT', city: 'Tokyo', flag: '🇯🇵', price: 850 },
+  { code: 'DXB', city: 'Dubai', flag: '🇦🇪', price: 520 },
+  { code: 'SYD', city: 'Sydney', flag: '🇦🇺', price: 920 },
+  { code: 'FRA', city: 'Frankfurt', flag: '🇩🇪', price: 420 },
+  { code: 'SIN', city: 'Singapore', flag: '🇸🇬', price: 780 },
+  { code: 'YYZ', city: 'Toronto', flag: '🇨🇦', price: 340 }
 ])
 
-const handleSearch = () => {
-  console.log('Search form:', searchForm.value)
-  router.push('/search')
+const handleRecentSearch = async (search) => {
+  searchForm.value = {
+    tripType: search.tripType || 'round-trip',
+    origin: search.origin,
+    destination: search.destination,
+    departureDate: search.departureDate,
+    returnDate: search.returnDate || '',
+    passengers: search.passengers.toString(),
+    cabinClass: search.cabinClass || 'economy'
+  }
+  
+  await handleSearch()
 }
+
+const selectDestination = (destination) => {
+  searchForm.value.destination = destination.code
+}
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
+}
+
+onMounted(() => {
+  flightsStore.initializeFlightsData()
+  
+  // Set default departure date to tomorrow
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  searchForm.value.departureDate = tomorrow.toISOString().split('T')[0]
+  
+  // Set default return date to 7 days from departure
+  const returnDate = new Date(tomorrow)
+  returnDate.setDate(returnDate.getDate() + 7)
+  searchForm.value.returnDate = returnDate.toISOString().split('T')[0]
+})
 </script>

@@ -33,6 +33,18 @@ const router = createRouter({
       name: 'profile',
       component: () => import('@/pages/Profile.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/booking-history',
+      name: 'booking-history',
+      component: () => import('@/pages/BookingHistory.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/booking-details/:id',
+      name: 'booking-details',
+      component: () => import('@/pages/BookingHistory.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

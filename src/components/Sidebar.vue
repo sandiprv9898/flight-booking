@@ -72,23 +72,32 @@
         <div class="border-t border-gray-200 my-4"></div>
 
         <!-- My Bookings -->
-        <a href="#" class="nav-item">
+        <router-link
+          to="/booking-history"
+          class="nav-item"
+          :class="{ 'nav-item-active': $route.name === 'booking-history' }"
+        >
           <CalendarDaysIcon class="nav-icon" />
           <span>My Bookings</span>
-          <span class="ml-auto bg-primary-100 text-primary-600 text-xs font-medium px-2 py-1 rounded-full">3</span>
-        </a>
+          <span class="ml-auto bg-primary-100 text-primary-600 text-xs font-medium px-2 py-1 rounded-full">{{ bookingCount }}</span>
+        </router-link>
 
         <!-- Saved Flights -->
         <a href="#" class="nav-item">
           <HeartIcon class="nav-icon" />
           <span>Saved Flights</span>
+          <span class="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">{{ savedFlightCount }}</span>
         </a>
 
         <!-- Travel History -->
-        <a href="#" class="nav-item">
+        <router-link
+          to="/booking-history"
+          class="nav-item"
+          :class="{ 'nav-item-active': $route.name === 'booking-history' }"
+        >
           <ClockIcon class="nav-icon" />
           <span>Travel History</span>
-        </a>
+        </router-link>
 
         <!-- Divider -->
         <div class="border-t border-gray-200 my-4"></div>
@@ -179,6 +188,8 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useBookingStore } from '@/store/booking'
+import { useFlightsStore } from '@/store/flights'
 import {
   XMarkIcon,
   MagnifyingGlassIcon,
@@ -206,11 +217,21 @@ const props = defineProps({
 const emit = defineEmits(['close-mobile-menu'])
 
 const authStore = useAuthStore()
+const bookingStore = useBookingStore()
+const flightsStore = useFlightsStore()
 const router = useRouter()
 
 const user = computed(() => authStore.user)
 const currentWorkspace = computed(() => authStore.currentWorkspace)
 const userWorkspaces = computed(() => authStore.userWorkspaces)
+
+const bookingCount = computed(() => {
+  return bookingStore.bookings.filter(b => b.status !== 'cancelled').length
+})
+
+const savedFlightCount = computed(() => {
+  return flightsStore.savedFlights.length
+})
 
 const userInitials = computed(() => {
   if (!user.value) return ''
