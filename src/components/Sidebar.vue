@@ -89,13 +89,23 @@
           <span class="ml-auto bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">{{ savedFlightCount }}</span>
         </a>
 
+        <!-- Flight Status -->
+        <router-link
+          to="/flight-status"
+          class="nav-item"
+          :class="{ 'nav-item-active': $route.name === 'flight-status' }"
+        >
+          <ClockIcon class="nav-icon" />
+          <span>Flight Status</span>
+        </router-link>
+
         <!-- Travel History -->
         <router-link
           to="/booking-history"
           class="nav-item"
           :class="{ 'nav-item-active': $route.name === 'booking-history' }"
         >
-          <ClockIcon class="nav-icon" />
+          <CalendarDaysIcon class="nav-icon" />
           <span>Travel History</span>
         </router-link>
 
