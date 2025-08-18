@@ -1,151 +1,366 @@
 # ✈️ Flight Booking System – Project Policy & Rule Book
 
 ## Project Overview
-Flight Booking System is a **Laravel + Vue.js** based multi-step booking platform with seat selection, dynamic pricing, and admin management.  
-This project follows **strict UI/UX rules**, modular coding standards, and a structured development workflow to ensure scalability, maintainability, and reliability.
+Flight Booking System is a **Laravel + Vue 3** based airline reservation platform with interactive seat selection, dynamic pricing, multi-language support, and comprehensive booking management.  
+This project follows **strict UI/UX guidelines**, modular architecture patterns, and test-driven development to ensure enterprise-grade quality and user experience.
 
 ---
 
 ## 🚨 CRITICAL UI/UX RULES
 1. **ALWAYS use centralized UI components** (`/components/ui/`) - NO custom components outside design system.
-2. **NEVER use inline styles** or custom CSS files.
-3. **ONLY use Tailwind utilities** for styling.
-4. **Vue components MUST follow Composition API with `<script setup>`**.
-5. **Multi-step booking flow** MUST follow compact stepper UI (progress bar at top).
-6. **Filters must be INLINE** (search + dropdowns in header).
-7. **Seat Selection** MUST use an interactive grid layout with real-time availability.
-8. **Dynamic Pricing** display rules:
-   - Show base price + modifiers (seat type, time, demand).
-   - Price updates in real-time when seat/option changes.
-9. **Data Tables ONLY** for CRUD modules in admin (NO card grids).
-10. **Consistent Input Height**: All form inputs/buttons MUST be `h-10`.
-11. **Pagination Requirements (Admin)**:
-    - Default: 25 rows
-    - Options: 10, 25, 50, 100
-    - Show range: "Showing X–Y of Z"
-12. **Column Visibility Toggle**: Icon-only button above data tables.
-13. **Compact Layouts**: No hero sections, no oversized headers.
-14. **Booking Summary Panel**: MUST always be visible during checkout.
+2. **NEVER use inline styles** or custom CSS files - ONLY TailwindCSS utilities.
+3. **Vue 3 Composition API** with `<script setup>` is MANDATORY.
+4. **Multi-step booking flow** MUST use compact stepper with breadcrumbs (no vertical space waste).
+5. **Flight search filters** MUST be inline (airlines, stops, price, time) - NO sidebar filters.
+6. **Seat Selection** requires interactive visual seat map with:
+   - Color coding (available/booked/selected)
+   - Real-time availability updates
+   - Dynamic pricing per seat class
+7. **Price Summary Sidebar** MUST be:
+   - Sticky on desktop (always visible)
+   - Collapsible drawer on mobile
+   - Show real-time fare breakdown
+8. **Flight Listings** use card/grid layout with:
+   - Airline logo, duration, stops, price
+   - Inline sorting (price/duration/departure)
+   - Lazy loading for performance
+9. **Form Standards**:
+   - Input height: `h-10` (consistent)
+   - Real-time validation with tooltips
+   - Autocomplete for airports/cities
+10. **Admin Dashboards** use data tables (NO card grids) with:
+    - Pagination: 25 default (10/25/50/100 options)
+    - Column visibility toggle
+    - Bulk actions support
+11. **Mobile-First Responsive**:
+    - <768px: Compact single column
+    - 768-1024px: 2-column layouts
+    - >1024px: Full grid/table views
+12. **NO hero sections** on functional pages - maximize information density.
 
 ---
 
 ## Core Development Principles
 
 ### 1. Task Management
-- **Task Division**: Break into 2–4 hour tasks
-- **Task Numbering**: Use sequential format (`task-001`, `task-002`, …)
-- **Subtasks Required**: Each task must have subtasks
-- **Documentation**: Save in `/Docs/Tasks/`
-- **Tracking**: Use TodoWrite or project board for tracking
+- **Task Division**: Break features into 2–4 hour focused tasks
+- **Task Numbering**: Sequential format (`FB-001`, `FB-002`, ...) [FB = Flight Booking]
+- **Subtasks Required**: Each task must have measurable subtasks
+- **Documentation**: Store in `/docs/tasks/` with status tracking
+- **Progress Tracking**: Use TodoWrite for session tasks, maintain task log
 
 ### 2. Development Workflow (Mandatory)
 
 #### Phase 1: Analysis & Planning
-- Requirements analysis (Docs/Requirements/)
-- Implementation plan
-- Impact assessment (which modules/files affected)
-- Dependencies list
+- Review requirements (`/docs/UI_UX_requirement.md`)
+- Create implementation plan with component breakdown
+- Impact assessment (affected components/APIs/stores)
+- Identify external dependencies (Stripe, airport APIs)
 
 #### Phase 2: Implementation
-- Write **modular, reusable** code
-- **Follow Laravel best practices** (Service Layer, Repository Pattern)
-- **Follow Vue best practices** (Composable functions, Pinia store)
-- Type hints for PHP functions
-- Centralized error handling
-- Logging in backend (`monolog`)
+- **Frontend Architecture**:
+  - Vue 3 Composition API with TypeScript
+  - Pinia stores for state (booking, user, seat)
+  - Composables for business logic
+  - Centralized API client with interceptors
+- **Backend Architecture**:
+  - Laravel Service Layer Pattern
+  - Repository Pattern for data access
+  - Form Requests for validation
+  - API Resources for responses
+  - Queue jobs for email/notifications
+- **Real-time Features**:
+  - WebSocket for seat availability
+  - Price updates via broadcasting
+  - Session-based seat locking
 
 #### Phase 3: Testing & Validation
-- Unit tests (PHPUnit for Laravel, Vitest/Jest for Vue)
-- Integration tests for booking/payment APIs
-- E2E tests for booking flow (Cypress)
-- Minimum 80% coverage
-- Fix bugs before merge
+- **Unit Tests**: Services, pricing engine, composables
+- **Integration Tests**: Booking flow, payment processing
+- **E2E Tests**: Complete user journey (search → confirmation)
+- **Performance Tests**: <3s load, <300ms search results
+- **Coverage Target**: 80% minimum
+- **Manual Testing**: Cross-browser, mobile responsiveness
 
 #### Phase 4: Documentation & Commit
-- Add docblocks/docstrings
-- Update task documentation
-- Git commit referencing task
-- Status report (progress + testing notes)
+- Add JSDoc/PHPDoc for complex functions
+- Update component README files
+- Semantic commits: `feat:`, `fix:`, `test:`, `docs:`
+- Update task status and known issues
 
 ---
 
 ## 3. Code Quality Standards
 
-### Laravel Standards
-- Follow **PSR-12** coding style
-- Use **Service Layer & Repository Pattern** (no logic in controllers)
-- Use **Form Requests** for validation
-- Use **Resource Classes** for API responses
-- Type-hint all methods
-- Keep controllers thin
-- Database queries: optimize with indexes, avoid N+1
+### Backend Standards (Laravel)
+- **Architecture Patterns**:
+  - Controllers: Thin, delegate to services
+  - Services: Business logic layer
+  - Repositories: Data access abstraction
+  - Form Requests: Input validation
+  - API Resources: Response transformation
+- **Database Best Practices**:
+  - Migrations with rollback support
+  - Seeders for test data
+  - Eager loading to prevent N+1
+  - Database indexes on search fields
+  - Soft deletes for bookings/users
+- **API Design**:
+  - RESTful endpoints
+  - Consistent error responses
+  - Rate limiting for public endpoints
+  - API versioning (v1, v2)
 
-### Vue.js Standards
-- Use **Composition API** with `<script setup>`
-- Pinia for state management
-- Centralized components under `/components/ui/`
-- No direct API calls in components (use composables)
-- Error/loading states handled in all views
-- Proper props typing with `defineProps`
+### Frontend Standards (Vue 3)
+- **Component Architecture**:
+  - Atomic design: atoms → molecules → organisms
+  - Single responsibility per component
+  - Props validation with TypeScript
+  - Emit events for parent communication
+- **State Management (Pinia)**:
+  - Separate stores by domain (booking, user, flight)
+  - Getters for computed values
+  - Actions for async operations
+  - Persist critical state (localStorage)
+- **Performance Optimization**:
+  - Lazy load routes and heavy components
+  - Virtual scrolling for long lists
+  - Image optimization (WebP, lazy loading)
+  - Code splitting by route
 
-### UI/UX Standards
-- Booking steps must be **compact, minimal vertical space**
-- Seat maps must use **interactive grid with seat icons**
-- Pricing updates shown in real-time
-- Data density prioritized over large cards
-- Filters/search always inline
-- Responsive on all breakpoints
+### Flight Booking Specific Standards
+- **Search & Filters**:
+  - Debounced airport autocomplete (300ms)
+  - Real-time filter updates without page reload
+  - URL state sync for shareable searches
+- **Seat Selection**:
+  - Optimistic UI updates
+  - Seat locking mechanism (15min timeout)
+  - Visual feedback for hover/select states
+- **Booking Flow**:
+  - Progress persistence across sessions
+  - Form data validation at each step
+  - Back navigation preserves state
+- **Payment Security**:
+  - PCI compliance via Stripe
+  - No card details stored locally
+  - SSL/TLS for all transactions
 
 ---
 
 ## 4. Testing Requirements
 
-### Test Categories
-- Unit tests: Functions, services, pricing engine
-- Integration tests: Booking flow, seat locking
-- E2E: Search → Select → Book → Pay → Confirm
-- Performance tests: API response time, seat availability updates
+### Test Coverage Requirements
+- **Unit Tests**: 80% minimum coverage
+  - Pricing calculations
+  - Seat availability logic
+  - Date/time utilities
+  - Validation rules
+- **Integration Tests**:
+  - Complete booking flow
+  - Payment processing
+  - Seat locking mechanism
+  - Email notifications
+- **E2E Tests (Critical Paths)**:
+  - One-way booking: Search → Select → Pay → Confirm
+  - Round-trip booking with seat selection
+  - Booking cancellation flow
+  - User registration → Profile → Booking history
+- **Performance Benchmarks**:
+  - Page load: <3 seconds
+  - Search results: <300ms
+  - Seat map render: <500ms
+  - Payment processing: <5 seconds
 
-### Standards
-- Test naming: `BookingTest.php`, `useBookingFlow.spec.js`
-- Mock external APIs (payments, SMS)
-- Test edge cases (sold-out flights, failed payments)
-- Ensure booking lock prevents double-booking seats
+### Flight Booking Test Scenarios
+- **Edge Cases**:
+  - Last seat booking race condition
+  - Payment timeout handling
+  - Session expiry during booking
+  - Network failure recovery
+- **Business Rules**:
+  - Dynamic pricing updates
+  - Infant/child passenger rules
+  - Baggage allowance calculations
+  - Cancellation policy enforcement
 
 ---
 
 ## 5. Documentation Standards
 
 ### Code Documentation
-- PHP: Docblocks for all controllers/services
-- Vue: JSDoc for complex functions
-- Document pricing engine rules & assumptions
+- **Backend (PHP)**:
+  - PHPDoc blocks for all public methods
+  - @param, @return, @throws annotations
+  - Business logic explanations in services
+- **Frontend (Vue/JS)**:
+  - JSDoc for composables and utilities
+  - Component prop descriptions
+  - Store action documentation
+- **API Documentation**:
+  - OpenAPI/Swagger specification
+  - Request/response examples
+  - Error code references
+
+### Flight Booking Documentation Structure
+```
+/docs
+├── /architecture      # System design docs
+├── /api              # API specifications
+├── /components       # Component library docs
+├── /tasks           # Task tracking (FB-XXX)
+├── /testing         # Test plans & reports
+└── /deployment      # Server setup & CI/CD
+```
 
 ### Task Documentation Template
 ```markdown
-# Task-XXX: [Task Title]
+# FB-XXX: [Feature/Fix Title]
 
-## Overview
-[Brief description]
+## Context
+[Why this task is needed - business value]
 
-## Objectives
-- [ ] Objective 1
-- [ ] Objective 2
+## Scope
+- Affected components: [List Vue components]
+- API endpoints: [List Laravel routes]
+- Database changes: [Migrations needed]
 
-## Subtasks
-1. [ ] Subtask 1
-2. [ ] Subtask 2
+## Implementation Plan
+1. [ ] Backend changes
+2. [ ] Frontend components
+3. [ ] State management updates
+4. [ ] API integration
+5. [ ] Testing
+6. [ ] Documentation
 
-## Implementation Details
-[Technical plan]
+## Acceptance Criteria
+- [ ] User can [specific action]
+- [ ] System validates [specific rule]
+- [ ] Performance meets [specific metric]
 
-## Testing
-- Unit tests: [List files]
-- Integration: [List scenarios]
-- Manual steps: [Instructions]
+## Test Coverage
+- Unit: [List test files]
+- Integration: [Test scenarios]
+- E2E: [User journey tests]
 
-## Results
-[Outcome]
+## Deployment Notes
+[Environment variables, migrations, etc.]
+```
 
-## Known Issues
-[Limitations or future improvements]
+---
+
+## 6. Project-Specific Rules
+
+### Flight Booking Domain Rules
+- **Booking Reference**: 6-character alphanumeric (e.g., ABC123)
+- **Seat Lock Duration**: 15 minutes during checkout
+- **Payment Window**: 30 minutes after seat selection
+- **Cancellation Policy**: 24hr free cancellation for full fare tickets
+- **Check-in Window**: Opens 24hr before departure
+- **Infant Policy**: Max 1 infant per adult
+- **Group Booking**: 10+ passengers requires special handling
+
+### API Rate Limits
+- **Public Search**: 100 requests/minute
+- **Authenticated**: 500 requests/minute
+- **Payment**: 10 requests/minute per user
+- **Admin**: Unlimited
+
+### Data Retention
+- **User Sessions**: 30 days
+- **Incomplete Bookings**: 7 days
+- **Completed Bookings**: 7 years
+- **Payment Records**: 10 years
+- **Search History**: 90 days
+
+---
+
+## 7. Git Workflow
+
+### Branch Strategy
+- `main`: Production-ready code
+- `develop`: Integration branch
+- `feature/FB-XXX-description`: Feature branches
+- `bugfix/FB-XXX-description`: Bug fix branches
+- `hotfix/FB-XXX-description`: Emergency production fixes
+
+### Commit Messages
+```
+feat(booking): add seat selection component
+fix(payment): resolve Stripe timeout issue
+test(flight): add unit tests for pricing engine
+docs(api): update booking endpoint documentation
+refactor(search): optimize airport autocomplete
+```
+
+### Pull Request Requirements
+- Link to task (FB-XXX)
+- Description of changes
+- Screenshots for UI changes
+- Test coverage report
+- Reviewer checklist
+
+---
+
+## 8. Performance Targets
+
+### Frontend Metrics
+- **First Contentful Paint**: <1.5s
+- **Time to Interactive**: <3s
+- **Cumulative Layout Shift**: <0.1
+- **Bundle Size**: <500KB initial
+
+### Backend Metrics
+- **API Response Time**: <200ms average
+- **Database Queries**: <50ms
+- **Queue Processing**: <30s
+- **Cache Hit Rate**: >90%
+
+### Real-time Updates
+- **Seat Availability**: <500ms propagation
+- **Price Updates**: <1s reflection
+- **Booking Confirmation**: <5s email delivery
+
+---
+
+## 9. Security Requirements
+
+### Authentication & Authorization
+- **JWT tokens** with 1hr expiry
+- **Refresh tokens** with 30-day expiry
+- **2FA** for admin accounts
+- **OAuth2** for social logins
+
+### Data Protection
+- **Encryption at rest** for sensitive data
+- **TLS 1.3** for all connections
+- **PCI DSS** compliance for payments
+- **GDPR** compliance for EU users
+
+### Security Headers
+- Content-Security-Policy
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- Strict-Transport-Security
+
+---
+
+## 10. Monitoring & Logging
+
+### Application Monitoring
+- **APM**: Response times, error rates
+- **Real User Monitoring**: Core Web Vitals
+- **Uptime Monitoring**: 99.9% SLA
+- **Alert Thresholds**: Error rate >1%, Response time >500ms
+
+### Logging Strategy
+- **Application Logs**: Info, Warning, Error levels
+- **Audit Logs**: All booking modifications
+- **Security Logs**: Failed auth attempts
+- **Performance Logs**: Slow queries, API calls
+
+### Analytics Tracking
+- **User Journey**: Funnel analysis
+- **Conversion Rate**: Search to booking
+- **Drop-off Points**: Form abandonment
+- **Revenue Metrics**: Average booking value
