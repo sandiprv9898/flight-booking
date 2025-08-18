@@ -4,6 +4,12 @@
 Flight Booking System is a **Laravel + Vue 3** based airline reservation platform with interactive seat selection, dynamic pricing, multi-language support, and comprehensive booking management.  
 This project follows **strict UI/UX guidelines**, modular architecture patterns, and test-driven development to ensure enterprise-grade quality and user experience.
 
+### Development Environment
+- **Backend Port**: 3071 (Laravel API server)
+- **Frontend Port**: 3073 (Vue 3 development server)
+- **Database**: SQLite (local development)
+- **Port Range**: Use odd numbers between 3070-3080 to avoid conflicts with other projects
+
 ---
 
 ## 🚨 CRITICAL UI/UX RULES
@@ -365,3 +371,34 @@ refactor(search): optimize airport autocomplete
 - **Conversion Rate**: Search to booking
 - **Drop-off Points**: Form abandonment
 - **Revenue Metrics**: Average booking value
+
+---
+
+## 11. Local Development Setup
+
+### Port Configuration
+- **Laravel Backend**: `php artisan serve --port=3071`
+- **Vue Frontend**: `npm run dev -- --port 3073`
+- **Available Ports**: 3071, 3073, 3075, 3077, 3079 (odd numbers only)
+- **Database**: SQLite (no port needed)
+
+### Environment Files
+```bash
+# .env (Laravel)
+APP_URL=http://localhost:3071
+FRONTEND_URL=http://localhost:3073
+
+# vite.config.js (Vue)
+server: {
+  port: 3073
+}
+```
+
+### Development Commands
+```bash
+# Backend
+cd backend && php artisan serve --port=3071
+
+# Frontend  
+cd frontend && npm run dev -- --port 3073
+```
