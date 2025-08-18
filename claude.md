@@ -87,6 +87,7 @@ This project follows **strict UI/UX guidelines**, modular architecture patterns,
 - Update component README files
 - Semantic commits: `feat:`, `fix:`, `test:`, `docs:`
 - Update task status and known issues
+- **🚨 MANDATORY: After EVERY task/change → `git commit` → `git push`**
 
 ---
 
