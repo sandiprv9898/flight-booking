@@ -115,8 +115,13 @@
             <SeatMap />
           </div>
 
-          <!-- Step 3: Passenger Information -->
+          <!-- Step 3: Baggage & Extras -->
           <div v-if="currentStep === 3">
+            <BaggageExtras :passengers="passengers" ref="baggageExtrasRef" />
+          </div>
+
+          <!-- Step 4: Passenger Information -->
+          <div v-if="currentStep === 4">
             <div class="mb-6">
               <h1 class="text-2xl font-bold text-gray-900">Passenger Information</h1>
               <p class="text-gray-600">Enter details for all passengers</p>
@@ -235,8 +240,8 @@
             </div>
           </div>
 
-          <!-- Step 4: Payment -->
-          <div v-if="currentStep === 4">
+          <!-- Step 5: Payment -->
+          <div v-if="currentStep === 5">
             <div class="mb-6">
               <h1 class="text-2xl font-bold text-gray-900">Payment</h1>
               <p class="text-gray-600">Complete your booking with secure payment</p>
@@ -331,32 +336,54 @@
             </div>
           </div>
 
-          <!-- Step 5: Confirmation -->
-          <div v-if="currentStep === 5">
-            <div class="text-center py-12">
-              <div class="w-24 h-24 bg-green-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                <CheckCircleIcon class="w-12 h-12 text-green-600" />
+          <!-- Step 6: Confirmation -->
+          <div v-if="currentStep === 6">
+            <div class="text-center py-8">
+              <div class="w-24 h-24 bg-success-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+                <CheckCircleIcon class="w-12 h-12 text-success-600" />
               </div>
               
-              <h1 class="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h1>
-              <p class="text-gray-600 mb-8">Your flight has been successfully booked</p>
+              <h1 class="text-3xl font-bold text-neutral-900 mb-2">Booking Confirmed!</h1>
+              <p class="text-neutral-600 mb-8">Your flight has been successfully booked</p>
               
-              <div class="max-w-md mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+              <div class="max-w-md mx-auto bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
                 <div class="text-center">
-                  <div class="text-lg font-semibold text-gray-900 mb-2">{{ selectedFlight?.airline }}</div>
-                  <div class="text-gray-600 mb-4">{{ selectedFlight?.flightNumber }}</div>
+                  <div class="text-lg font-semibold text-neutral-900 mb-2">{{ selectedFlight?.airline }}</div>
+                  <div class="text-neutral-600 mb-4">{{ selectedFlight?.flightNumber }}</div>
                   <div class="text-2xl font-bold text-primary-600 mb-2">Booking Reference</div>
-                  <div class="text-xl font-mono bg-gray-50 p-3 rounded">{{ bookingReference }}</div>
+                  <div class="text-xl font-mono bg-neutral-50 p-3 rounded">{{ bookingReference }}</div>
                 </div>
               </div>
               
-              <div class="flex justify-center space-x-4">
+              <div class="flex justify-center space-x-4 mb-8">
                 <Button variant="secondary" @click="downloadTickets">
                   Download Tickets
                 </Button>
                 <Button variant="primary" @click="viewBookings">
                   View My Bookings
                 </Button>
+              </div>
+            </div>
+
+            <!-- Additional Services -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+              <!-- Flight Status -->
+              <div>
+                <h2 class="text-xl font-bold text-neutral-900 mb-4">Flight Status</h2>
+                <FlightStatus v-if="selectedFlight" :flight-id="selectedFlight.id" />
+              </div>
+
+              <!-- Mobile Check-in -->
+              <div>
+                <h2 class="text-xl font-bold text-neutral-900 mb-4">Mobile Check-in</h2>
+                <MobileCheckIn 
+                  v-if="selectedFlight && passengers.length > 0" 
+                  :booking="{ 
+                    flight: selectedFlight, 
+                    passengers: passengers,
+                    seats: selectedSeats 
+                  }" 
+                />
               </div>
             </div>
           </div>
@@ -374,6 +401,9 @@ import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
 import BookingStepper from '@/components/booking/BookingStepper.vue'
 import SeatMap from '@/components/booking/SeatMap.vue'
+import BaggageExtras from '@/components/booking/BaggageExtras.vue'
+import FlightStatus from '@/components/FlightStatus.vue'
+import MobileCheckIn from '@/components/MobileCheckIn.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Select from '@/components/ui/Select.vue'
@@ -385,6 +415,7 @@ const bookingStore = useBookingStore()
 const isMobileMenuOpen = ref(false)
 const promoCode = ref('')
 const bookingReference = ref('')
+const baggageExtrasRef = ref(null)
 
 // Mock flights for selection
 const mockFlights = ref([
@@ -488,7 +519,7 @@ onMounted(() => {
   bookingStore.initializeBookingData()
   
   // Generate booking reference for confirmation step
-  if (currentStep.value === 5) {
+  if (currentStep.value === 6) {
     bookingReference.value = `FB${Date.now().toString().slice(-6)}`
   }
 })

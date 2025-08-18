@@ -12,38 +12,38 @@
       <!-- Page Content -->
       <main class="flex-1 overflow-y-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Search Flights</h1>
-            <p class="mt-2 text-gray-600">Find and book your perfect flight</p>
+          <div class="mb-12 text-center">
+            <h1 class="text-5xl font-light text-neutral-900 mb-4">Book Your Flight</h1>
+            <p class="text-xl text-neutral-500 font-light">Fast. Simple. Reliable.</p>
           </div>
 
           <!-- Search Form -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-            <form class="space-y-6">
+          <div class="bg-white rounded-xl border border-neutral-300 p-6 mb-8 max-w-3xl mx-auto shadow-sm">
+            <form class="space-y-5">
               <!-- Trip Type -->
-              <div class="flex space-x-4">
-                <label class="flex items-center">
+              <div class="flex space-x-6 justify-center">
+                <label class="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     value="round-trip"
                     v-model="searchForm.tripType"
-                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-400"
                   />
-                  <span class="ml-2 text-sm font-medium text-gray-700">Round Trip</span>
+                  <span class="ml-3 text-neutral-700 font-medium">Round Trip</span>
                 </label>
-                <label class="flex items-center">
+                <label class="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     value="one-way"
                     v-model="searchForm.tripType"
-                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-400"
                   />
-                  <span class="ml-2 text-sm font-medium text-gray-700">One Way</span>
+                  <span class="ml-3 text-neutral-700 font-medium">One Way</span>
                 </label>
               </div>
 
               <!-- Origin and Destination -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input
                   v-model="searchForm.origin"
                   label="From"
@@ -59,23 +59,23 @@
               </div>
 
               <!-- Dates -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input
                   v-model="searchForm.departureDate"
                   type="date"
-                  label="Departure Date"
+                  label="Departure"
                   required
                 />
                 <Input
                   v-if="searchForm.tripType === 'round-trip'"
                   v-model="searchForm.returnDate"
                   type="date"
-                  label="Return Date"
+                  label="Return"
                 />
               </div>
 
               <!-- Passengers and Cabin -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Select
                   v-model="searchForm.passengers"
                   label="Passengers"
@@ -83,22 +83,22 @@
                 />
                 <Select
                   v-model="searchForm.cabinClass"
-                  label="Cabin Class"
+                  label="Class"
                   :options="cabinOptions"
                 />
               </div>
 
               <!-- Search Button -->
-              <div class="flex justify-center">
+              <div class="flex justify-center pt-2">
                 <Button
                   variant="primary"
                   size="lg"
                   @click="handleSearch"
                   :loading="loading"
                   :disabled="loading"
-                  class="px-12"
+                  class="px-16 py-3 text-lg font-medium"
                 >
-                  <MagnifyingGlassIcon class="h-5 w-5 mr-2" />
+                  <MagnifyingGlassIcon class="h-5 w-5 mr-3" />
                   {{ loading ? 'Searching...' : 'Search Flights' }}
                 </Button>
               </div>
@@ -106,46 +106,46 @@
           </div>
 
           <!-- Recent Searches -->
-          <div v-if="recentSearches.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Searches</h2>
-            <div class="space-y-3">
+          <div v-if="recentSearches.length > 0" class="bg-white rounded-lg border border-neutral-300 p-5 mb-6 max-w-3xl mx-auto shadow-sm">
+            <h2 class="text-lg font-medium text-neutral-900 mb-3">Recent Searches</h2>
+            <div class="space-y-2">
               <div
                 v-for="search in recentSearches"
                 :key="search.id"
-                class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 cursor-pointer transition-colors"
                 @click="handleRecentSearch(search)"
               >
                 <div class="flex items-center space-x-4">
                   <div class="text-sm">
-                    <div class="font-medium text-gray-900">
+                    <div class="font-medium text-neutral-900">
                       {{ search.origin }} → {{ search.destination }}
                     </div>
-                    <div class="text-gray-500">
+                    <div class="text-neutral-500 text-xs">
                       {{ formatDate(search.departureDate) }} • {{ search.passengers }} passenger{{ search.passengers > 1 ? 's' : '' }} • {{ search.cabinClass }}
                     </div>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" @click.stop="handleRecentSearch(search)">
-                  Search Again
+                  Search
                 </Button>
               </div>
             </div>
           </div>
 
           <!-- Popular Destinations -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-8">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Popular Destinations</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-lg border border-neutral-300 p-5 max-w-3xl mx-auto shadow-sm">
+            <h2 class="text-lg font-medium text-neutral-900 mb-4 text-center">Popular Destinations</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div
                 v-for="destination in popularDestinations"
                 :key="destination.code"
-                class="text-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                class="text-center p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 cursor-pointer transition-colors"
                 @click="selectDestination(destination)"
               >
-                <div class="text-2xl mb-2">{{ destination.flag }}</div>
-                <div class="font-medium text-gray-900">{{ destination.city }}</div>
-                <div class="text-sm text-gray-500">{{ destination.code }}</div>
-                <div class="text-xs text-green-600 mt-1">from ${{ destination.price }}</div>
+                <div class="text-3xl mb-2">{{ destination.flag }}</div>
+                <div class="font-medium text-neutral-900">{{ destination.city }}</div>
+                <div class="text-sm text-neutral-500">{{ destination.code }}</div>
+                <div class="text-sm text-success-600 mt-1 font-medium">from ${{ destination.price }}</div>
               </div>
             </div>
           </div>

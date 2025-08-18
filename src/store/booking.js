@@ -71,7 +71,7 @@ const generateSeats = () => {
 
 export const useBookingStore = defineStore('booking', () => {
   // State
-  const currentStep = ref(1) // 1: Flight, 2: Seats, 3: Passengers, 4: Payment, 5: Confirmation
+  const currentStep = ref(1) // 1: Flight, 2: Seats, 3: Extras, 4: Passengers, 5: Payment, 6: Confirmation
   const selectedFlight = ref(null)
   const returnFlight = ref(null)
   const selectedSeats = ref([])
@@ -116,7 +116,7 @@ export const useBookingStore = defineStore('booking', () => {
   const loading = ref(false)
 
   // Getters
-  const totalSteps = computed(() => 5)
+  const totalSteps = computed(() => 6)
   
   const stepProgress = computed(() => (currentStep.value / totalSteps.value) * 100)
 
@@ -208,9 +208,10 @@ export const useBookingStore = defineStore('booking', () => {
       switch (step) {
         case 1: return !!selectedFlight.value
         case 2: return selectedSeats.value.length === passengers.value.length
-        case 3: return passengers.value.every(p => p.firstName && p.lastName && p.dateOfBirth)
-        case 4: return paymentInfo.value.cardNumber && paymentInfo.value.nameOnCard
-        case 5: return true
+        case 3: return true // Extras are optional
+        case 4: return passengers.value.every(p => p.firstName && p.lastName && p.dateOfBirth)
+        case 5: return paymentInfo.value.cardNumber && paymentInfo.value.nameOnCard
+        case 6: return true
         default: return false
       }
     }
@@ -409,7 +410,7 @@ export const useBookingStore = defineStore('booking', () => {
       clearSeatLockTimer()
       
       // Move to confirmation step
-      currentStep.value = 5
+      currentStep.value = 6
       
       return { success: true, booking }
     } catch (error) {

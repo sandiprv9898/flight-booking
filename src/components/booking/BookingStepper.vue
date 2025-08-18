@@ -84,7 +84,7 @@
         <div class="flex space-x-3">
           <!-- Save Progress -->
           <Button
-            v-if="currentStep > 1 && currentStep < 5"
+            v-if="currentStep > 1 && currentStep < 6"
             variant="ghost"
             @click="saveProgress"
           >
@@ -94,19 +94,19 @@
 
           <!-- Next/Complete Button -->
           <Button
-            v-if="currentStep < 5"
+            v-if="currentStep < 6"
             variant="primary"
             @click="nextStep"
             :disabled="!canProceed || loading"
             :loading="loading"
           >
-            {{ currentStep === 4 ? 'Complete Booking' : 'Continue' }}
-            <ChevronRightIcon v-if="currentStep < 4" class="w-4 h-4 ml-2" />
+            {{ currentStep === 5 ? 'Complete Booking' : 'Continue' }}
+            <ChevronRightIcon v-if="currentStep < 5" class="w-4 h-4 ml-2" />
           </Button>
 
           <!-- Book Another Flight -->
           <Button
-            v-if="currentStep === 5"
+            v-if="currentStep === 6"
             variant="primary"
             @click="startNewBooking"
           >
@@ -179,16 +179,21 @@ const steps = [
   },
   {
     id: 3,
+    title: 'Extras',
+    description: 'Baggage & services'
+  },
+  {
+    id: 4,
     title: 'Passenger Info',
     description: 'Enter passenger details'
   },
   {
-    id: 4,
+    id: 5,
     title: 'Payment',
     description: 'Complete your booking'
   },
   {
-    id: 5,
+    id: 6,
     title: 'Confirmation',
     description: 'Booking complete'
   }
@@ -224,6 +229,16 @@ const currentStepInfo = computed(() => {
       ]
     },
     3: {
+      title: 'Add Extras & Services',
+      description: 'Customize your flight with baggage, meals, and travel services.',
+      tips: [
+        'Add checked baggage to avoid airport fees',
+        'Select meals for dietary preferences',
+        'Consider travel insurance for protection',
+        'Priority boarding saves time at the gate'
+      ]
+    },
+    4: {
       title: 'Enter Passenger Information',
       description: 'Provide accurate details for all passengers as they appear on ID documents.',
       tips: [
@@ -232,7 +247,7 @@ const currentStepInfo = computed(() => {
         'Add frequent flyer numbers for benefits'
       ]
     },
-    4: {
+    5: {
       title: 'Complete Your Payment',
       description: 'Review your booking details and complete the payment.',
       tips: [
@@ -241,7 +256,7 @@ const currentStepInfo = computed(() => {
         'Payment is secure and encrypted'
       ]
     },
-    5: {
+    6: {
       title: 'Booking Confirmed!',
       description: 'Your flight has been successfully booked.',
       tips: [
@@ -266,7 +281,7 @@ const getStepClasses = (stepId) => {
 }
 
 const nextStep = async () => {
-  if (currentStep.value === 4) {
+  if (currentStep.value === 5) {
     // Complete booking
     const result = await bookingStore.completeBooking()
     if (!result.success) {
