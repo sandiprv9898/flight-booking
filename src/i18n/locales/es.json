@@ -1,0 +1,133 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "select": "Seleccionar",
+    "all": "Todo",
+    "none": "Ninguno",
+    "yes": "Sí",
+    "no": "No",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "open": "Abrir"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "search": "Buscar",
+    "booking": "Reserva",
+    "bookingHistory": "Historial de Reservas",
+    "profile": "Perfil",
+    "flightStatus": "Estado del Vuelo",
+    "help": "Ayuda",
+    "logout": "Cerrar Sesión",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse"
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión en tu cuenta para continuar",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "rememberMe": "Recordarme",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "signIn": "Iniciar sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "createAccount": "Crear una aquí"
+    },
+    "register": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Únete para empezar a reservar vuelos",
+      "step1Title": "Información Personal",
+      "step2Title": "Documentos de Viaje",
+      "step3Title": "Preferencias",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "phone": "Teléfono",
+      "dateOfBirth": "Fecha de Nacimiento",
+      "passportNumber": "Número de Pasaporte",
+      "nationality": "Nacionalidad",
+      "passportExpiry": "Vencimiento del Pasaporte",
+      "currency": "Moneda Preferida",
+      "language": "Idioma",
+      "timezone": "Zona Horaria",
+      "notifications": "Notificaciones por Email",
+      "newsletter": "Actualizaciones del Boletín",
+      "createAccount": "Crear Cuenta",
+      "alreadyHaveAccount": "¿Ya tienes cuenta?",
+      "signInHere": "Inicia sesión aquí"
+    }
+  },
+  "flight": {
+    "search": {
+      "title": "Encuentra Tu Vuelo Perfecto",
+      "origin": "Desde",
+      "destination": "Hasta",
+      "departure": "Salida",
+      "return": "Regreso",
+      "passengers": "Pasajeros",
+      "cabinClass": "Clase de Cabina",
+      "searchFlights": "Buscar Vuelos",
+      "oneWay": "Solo Ida",
+      "roundTrip": "Ida y Vuelta",
+      "multiCity": "Multi Ciudad"
+    },
+    "results": {
+      "title": "Resultados de Búsqueda",
+      "found": "{count} vuelo encontrado | {count} vuelos encontrados",
+      "noResults": "No se encontraron vuelos",
+      "tryAgain": "Prueba ajustando tus criterios de búsqueda",
+      "newSearch": "Nueva Búsqueda",
+      "duration": "Duración",
+      "stops": "Escalas",
+      "nonstop": "Sin escalas",
+      "oneStop": "1 escala",
+      "twoStops": "2 escalas",
+      "selectFlight": "Seleccionar Vuelo",
+      "price": "Precio",
+      "perPerson": "por persona",
+      "seatsLeft": "{count} asiento disponible | {count} asientos disponibles"
+    }
+  },
+  "booking": {
+    "steps": {
+      "selectFlight": "Seleccionar Vuelo",
+      "selectSeats": "Seleccionar Asientos",
+      "passengerInfo": "Info Pasajeros",
+      "extras": "Extras",
+      "payment": "Pago",
+      "confirmation": "Confirmación"
+    },
+    "seatSelection": {
+      "title": "Elige Tus Asientos",
+      "subtitle": "Selecciona asientos para {count} pasajero | Selecciona asientos para los {count} pasajeros",
+      "available": "Disponible",
+      "occupied": "Ocupado",
+      "selected": "Seleccionado",
+      "premium": "Premium",
+      "business": "Business",
+      "economy": "Económica",
+      "exitRow": "Fila de Emergencia",
+      "extra": "+ {amount}",
+      "timeRemaining": "Tiempo restante: {time}",
+      "selectSeat": "Seleccionar Asiento"
+    }
+  }
+}

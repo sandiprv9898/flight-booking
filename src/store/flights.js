@@ -1,180 +1,71 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-// Mock flight data
-const mockFlights = [
-  {
-    id: 'FL001',
-    airline: 'British Airways',
-    airlineCode: 'BA',
-    flightNumber: 'BA178',
-    aircraft: 'Boeing 777-300ER',
-    origin: { code: 'JFK', name: 'John F. Kennedy International', city: 'New York' },
-    destination: { code: 'LHR', name: 'London Heathrow', city: 'London' },
-    departure: { time: '08:30', date: '2024-03-15' },
-    arrival: { time: '20:45', date: '2024-03-15' },
-    duration: '7h 15m',
-    stops: 0,
-    price: 845,
-    originalPrice: 920,
-    cabinClass: 'Economy',
-    availableSeats: 47,
-    baggage: { checked: '23kg', carry: '8kg' },
-    amenities: ['WiFi', 'Entertainment', 'Meals'],
-    features: ['Extra Legroom', 'Priority Boarding']
-  },
-  {
-    id: 'FL002',
-    airline: 'Virgin Atlantic',
-    airlineCode: 'VS',
-    flightNumber: 'VS003',
-    aircraft: 'Airbus A350-1000',
-    origin: { code: 'JFK', name: 'John F. Kennedy International', city: 'New York' },
-    destination: { code: 'LHR', name: 'London Heathrow', city: 'London' },
-    departure: { time: '14:20', date: '2024-03-15' },
-    arrival: { time: '02:35', date: '2024-03-16' },
-    duration: '7h 15m',
-    stops: 0,
-    price: 920,
-    originalPrice: 1050,
-    cabinClass: 'Economy',
-    availableSeats: 23,
-    baggage: { checked: '23kg', carry: '10kg' },
-    amenities: ['WiFi', 'Entertainment', 'Premium Meals', 'Bar'],
-    features: ['Mood Lighting', 'Premium Economy Option']
-  },
-  {
-    id: 'FL003',
-    airline: 'American Airlines',
-    airlineCode: 'AA',
-    flightNumber: 'AA100',
-    aircraft: 'Boeing 777-200ER',
-    origin: { code: 'JFK', name: 'John F. Kennedy International', city: 'New York' },
-    destination: { code: 'LHR', name: 'London Heathrow', city: 'London' },
-    departure: { time: '22:15', date: '2024-03-15' },
-    arrival: { time: '10:30', date: '2024-03-16' },
-    duration: '7h 15m',
-    stops: 0,
-    price: 780,
-    originalPrice: 780,
-    cabinClass: 'Economy',
-    availableSeats: 89,
-    baggage: { checked: '23kg', carry: '8kg' },
-    amenities: ['WiFi', 'Entertainment'],
-    features: ['Red Eye Special']
-  },
-  {
-    id: 'FL004',
-    airline: 'Delta Airlines',
-    airlineCode: 'DL',
-    flightNumber: 'DL201',
-    aircraft: 'Airbus A330-900neo',
-    origin: { code: 'JFK', name: 'John F. Kennedy International', city: 'New York' },
-    destination: { code: 'CDG', name: 'Charles de Gaulle', city: 'Paris' },
-    departure: { time: '10:45', date: '2024-03-15' },
-    arrival: { time: '00:15', date: '2024-03-16' },
-    duration: '7h 30m',
-    stops: 0,
-    price: 695,
-    originalPrice: 780,
-    cabinClass: 'Economy',
-    availableSeats: 156,
-    baggage: { checked: '23kg', carry: '8kg' },
-    amenities: ['WiFi', 'Entertainment', 'Meals'],
-    features: ['Delta One Available', 'Sky Club Access']
-  },
-  {
-    id: 'FL005',
-    airline: 'Lufthansa',
-    airlineCode: 'LH',
-    flightNumber: 'LH441',
-    aircraft: 'Airbus A380-800',
-    origin: { code: 'JFK', name: 'John F. Kennedy International', city: 'New York' },
-    destination: { code: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt' },
-    departure: { time: '16:30', date: '2024-03-15' },
-    arrival: { time: '06:45', date: '2024-03-16' },
-    duration: '7h 15m',
-    stops: 0,
-    price: 1120,
-    originalPrice: 1120,
-    cabinClass: 'Business',
-    availableSeats: 12,
-    baggage: { checked: '32kg', carry: '8kg' },
-    amenities: ['WiFi', 'Premium Entertainment', 'Premium Meals', 'Lounge Access'],
-    features: ['Lie-flat Seats', 'Priority Check-in', 'A380 Experience']
-  }
-]
-
-// Mock airports data
-const mockAirports = [
-  { code: 'JFK', name: 'John F. Kennedy International', city: 'New York', country: 'US' },
-  { code: 'LHR', name: 'London Heathrow', city: 'London', country: 'GB' },
-  { code: 'CDG', name: 'Charles de Gaulle', city: 'Paris', country: 'FR' },
-  { code: 'FRA', name: 'Frankfurt Airport', city: 'Frankfurt', country: 'DE' },
-  { code: 'LAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'US' },
-  { code: 'DXB', name: 'Dubai International', city: 'Dubai', country: 'AE' },
-  { code: 'SIN', name: 'Singapore Changi', city: 'Singapore', country: 'SG' },
-  { code: 'NRT', name: 'Narita International', city: 'Tokyo', country: 'JP' },
-  { code: 'SYD', name: 'Sydney Kingsford Smith', city: 'Sydney', country: 'AU' },
-  { code: 'YYZ', name: 'Toronto Pearson', city: 'Toronto', country: 'CA' }
-]
+import { useCurrencyStore } from './currency'
+import airportService from '@/services/airportService'
+import liveDataService from '@/services/liveDataService'
 
 export const useFlightsStore = defineStore('flights', () => {
+  const currencyStore = useCurrencyStore()
+  
   // State
-  const flights = ref([...mockFlights])
-  const searchCriteria = ref({
-    origin: '',
-    destination: '',
-    departureDate: '',
-    returnDate: '',
-    passengers: 1,
-    cabinClass: 'economy',
-    tripType: 'round-trip'
-  })
-  const searchResults = ref([])
-  const selectedFlight = ref(null)
+  const flights = ref([])
+  const searchCriteria = ref({})
   const loading = ref(false)
+  const lastSearchTime = ref(null)
   const filters = ref({
     airline: '',
     stops: '',
-    priceRange: [0, 2000],
+    priceRange: [0, 5000],
     timeOfDay: '',
     duration: ''
   })
   const sortBy = ref('price')
+  const searchResults = ref([])
+  const selectedFlight = ref(null)
   const savedFlights = ref([])
   const priceAlerts = ref([])
+  const searchHistory = ref([])
+  const useLiveData = ref(true) // Toggle for live vs enhanced mock data
 
-  // Getters
+  // Computed
   const filteredFlights = computed(() => {
     let result = [...searchResults.value]
 
     // Apply filters
     if (filters.value.airline) {
-      result = result.filter(flight => flight.airlineCode === filters.value.airline)
+      result = result.filter(flight => flight.airline.code === filters.value.airline)
     }
 
     if (filters.value.stops !== '') {
-      const stops = parseInt(filters.value.stops)
-      result = result.filter(flight => flight.stops === stops)
+      const stopsFilter = filters.value.stops
+      if (stopsFilter === '0') {
+        result = result.filter(flight => flight.stops.length === 0)
+      } else if (stopsFilter === '1') {
+        result = result.filter(flight => flight.stops.length === 1)
+      } else if (stopsFilter === '2+') {
+        result = result.filter(flight => flight.stops.length >= 2)
+      }
     }
 
     if (filters.value.priceRange) {
+      const [min, max] = filters.value.priceRange
       result = result.filter(flight => 
-        flight.price >= filters.value.priceRange[0] && 
-        flight.price <= filters.value.priceRange[1]
+        flight.price.total >= min && flight.price.total <= max
       )
     }
 
     if (filters.value.timeOfDay) {
       result = result.filter(flight => {
-        const hour = parseInt(flight.departure.time.split(':')[0])
+        const hour = new Date(flight.departure.time).getHours()
         switch (filters.value.timeOfDay) {
-          case 'morning': return hour >= 6 && hour < 12
-          case 'afternoon': return hour >= 12 && hour < 18
-          case 'evening': return hour >= 18 && hour < 24
-          case 'night': return hour >= 0 && hour < 6
-          default: return true
+          case 'morning':
+            return hour >= 6 && hour < 12
+          case 'afternoon':
+            return hour >= 12 && hour < 18
+          case 'evening':
+            return hour >= 18 && hour < 24
+          default:
+            return true
         }
       })
     }
@@ -182,20 +73,19 @@ export const useFlightsStore = defineStore('flights', () => {
     // Apply sorting
     switch (sortBy.value) {
       case 'price':
-        result.sort((a, b) => a.price - b.price)
+        result.sort((a, b) => a.price.total - b.price.total)
         break
       case 'duration':
-        result.sort((a, b) => {
-          const aDuration = parseInt(a.duration.replace(/[^\d]/g, ''))
-          const bDuration = parseInt(b.duration.replace(/[^\d]/g, ''))
-          return aDuration - bDuration
-        })
+        result.sort((a, b) => a.duration.total - b.duration.total)
         break
       case 'departure':
-        result.sort((a, b) => a.departure.time.localeCompare(b.departure.time))
+        result.sort((a, b) => new Date(a.departure.time) - new Date(b.departure.time))
+        break
+      case 'arrival':
+        result.sort((a, b) => new Date(a.arrival.time) - new Date(b.arrival.time))
         break
       case 'airline':
-        result.sort((a, b) => a.airline.localeCompare(b.airline))
+        result.sort((a, b) => a.airline.name.localeCompare(b.airline.name))
         break
       default:
         break
@@ -205,79 +95,202 @@ export const useFlightsStore = defineStore('flights', () => {
   })
 
   const availableAirlines = computed(() => {
-    const airlines = new Set(searchResults.value.map(flight => ({
-      code: flight.airlineCode,
-      name: flight.airline
-    })))
-    return Array.from(airlines)
+    const airlines = new Map()
+    searchResults.value.forEach(flight => {
+      if (!airlines.has(flight.airline.code)) {
+        airlines.set(flight.airline.code, {
+          code: flight.airline.code,
+          name: flight.airline.name
+        })
+      }
+    })
+    return Array.from(airlines.values())
   })
 
   const priceRange = computed(() => {
     if (searchResults.value.length === 0) return [0, 2000]
-    const prices = searchResults.value.map(flight => flight.price)
+    const prices = searchResults.value.map(flight => flight.price.total)
     return [Math.min(...prices), Math.max(...prices)]
   })
 
   const flightsByPrice = computed(() => {
     const grouped = {
-      budget: filteredFlights.value.filter(f => f.price < 500),
-      economy: filteredFlights.value.filter(f => f.price >= 500 && f.price < 1000),
-      premium: filteredFlights.value.filter(f => f.price >= 1000)
+      budget: filteredFlights.value.filter(f => f.price.total < 500),
+      economy: filteredFlights.value.filter(f => f.price.total >= 500 && f.price.total < 1000),
+      premium: filteredFlights.value.filter(f => f.price.total >= 1000)
     }
     return grouped
+  })
+
+  const searchStats = computed(() => {
+    return {
+      total: searchResults.value.length,
+      filtered: filteredFlights.value.length,
+      airlines: availableAirlines.value.length,
+      priceRange: priceRange.value,
+      avgPrice: searchResults.value.length > 0 
+        ? Math.round(searchResults.value.reduce((sum, f) => sum + f.price.total, 0) / searchResults.value.length)
+        : 0
+    }
   })
 
   // Actions
   const searchFlights = async (criteria) => {
     loading.value = true
     searchCriteria.value = { ...criteria }
+    lastSearchTime.value = new Date().toISOString()
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      let searchResults = []
 
-      // Mock search logic - filter flights based on criteria
-      let results = mockFlights.filter(flight => {
-        const matchesRoute = flight.origin.code.includes(criteria.origin.toUpperCase()) &&
-                           flight.destination.code.includes(criteria.destination.toUpperCase())
-        
-        const matchesDate = flight.departure.date === criteria.departureDate
-        
-        return matchesRoute && matchesDate
-      })
+      if (useLiveData.value) {
+        try {
+          // Try to get live flight data
+          searchResults = await liveDataService.getLiveFlights({
+            origin: criteria.origin,
+            destination: criteria.destination,
+            date: criteria.departureDate,
+            passengers: criteria.passengers,
+            cabinClass: criteria.cabinClass
+          })
 
-      // Add some variety with price fluctuations
-      results = results.map(flight => ({
-        ...flight,
-        price: Math.round(flight.price * (0.85 + Math.random() * 0.3)),
-        availableSeats: Math.floor(Math.random() * 200) + 10
-      }))
+          console.log(`Found ${searchResults.length} live flights`)
+        } catch (error) {
+          console.warn('Live data unavailable, using enhanced mock data:', error.message)
+          // Fallback to enhanced mock data from airport service
+          searchResults = await airportService.searchFlights(criteria)
+        }
+      } else {
+        // Use enhanced mock data from airport service
+        searchResults = await airportService.searchFlights(criteria)
+      }
 
-      searchResults.value = results
+      // Process search results
+      const processedResults = processFlightResults(searchResults, criteria)
       
-      // Add to recent searches (stored in localStorage)
-      addToRecentSearches(criteria)
+      // Store results
+      if (criteria.tripType === 'round-trip' && searchResults.return) {
+        searchResults.value = {
+          outbound: processedResults.outbound || processedResults,
+          return: processedResults.return || []
+        }
+      } else {
+        searchResults.value = processedResults.outbound || processedResults
+      }
 
-      return { success: true, count: results.length }
+      // Add to search history
+      addToSearchHistory(criteria, searchResults.value.length || processedResults.length)
+
+      // Reset filters to default
+      resetFilters()
+
+      return { 
+        success: true, 
+        count: Array.isArray(searchResults.value) ? searchResults.value.length : searchResults.value.outbound?.length || 0,
+        isLive: searchResults.some ? searchResults.some(f => f.isLive) : false
+      }
     } catch (error) {
       console.error('Flight search error:', error)
-      return { success: false, error: 'Search failed' }
+      return { 
+        success: false, 
+        error: error.message || 'Search failed. Please try again.' 
+      }
     } finally {
       loading.value = false
     }
   }
 
+  // Process and enhance flight results
+  const processFlightResults = (results, criteria) => {
+    if (Array.isArray(results)) {
+      return results.map(flight => enhanceFlightData(flight, criteria))
+    } else if (results.outbound) {
+      return {
+        outbound: results.outbound.map(flight => enhanceFlightData(flight, criteria)),
+        return: results.return ? results.return.map(flight => enhanceFlightData(flight, criteria)) : undefined
+      }
+    }
+    return []
+  }
+
+  // Enhance flight data with additional computed fields
+  const enhanceFlightData = (flight, criteria) => {
+    return {
+      ...flight,
+      // Add display fields
+      departureTime: formatTime(flight.departure.time),
+      arrivalTime: formatTime(flight.arrival.time),
+      departureDate: formatDate(flight.departure.time),
+      arrivalDate: formatDate(flight.arrival.time),
+      
+      // Price in selected currency
+      displayPrice: currencyStore.convertPrice(flight.price.total),
+      currencySymbol: currencyStore.getCurrencySymbol(),
+      
+      // Stops information
+      stopsCount: flight.stops?.length || 0,
+      stopsText: flight.stops?.length === 0 ? 'Non-stop' : 
+                flight.stops?.length === 1 ? '1 stop' : 
+                `${flight.stops.length} stops`,
+      
+      // Duration formatting
+      durationText: flight.duration.formatted || formatDuration(flight.duration.total),
+      
+      // Booking class availability
+      hasAvailability: (flight.availability?.[criteria.cabinClass] || 0) > (criteria.passengers?.adults || 1),
+      
+      // Price comparison
+      isGoodDeal: flight.price.total < (flight.originalPrice || flight.price.total * 1.2),
+      
+      // Airline logo path
+      airlineLogo: `/airlines/${flight.airline.code.toLowerCase()}.png`,
+      
+      // Time-based info
+      isDepartureMorning: new Date(flight.departure.time).getHours() < 12,
+      isDepartureEvening: new Date(flight.departure.time).getHours() >= 18,
+      isRedEye: new Date(flight.departure.time).getHours() >= 22 || new Date(flight.arrival.time).getHours() <= 6,
+      
+      // Search metadata
+      searchedAt: new Date().toISOString(),
+      searchCriteria: criteria
+    }
+  }
+
+  // Utility functions
+  const formatTime = (isoString) => {
+    return new Date(isoString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+  }
+
+  const formatDate = (isoString) => {
+    return new Date(isoString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const formatDuration = (minutes) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return `${hours}h ${mins}m`
+  }
+
+  // Flight selection and booking
   const selectFlight = (flight) => {
     selectedFlight.value = flight
   }
 
+  // Saved flights management
   const addToSavedFlights = (flight) => {
     const existingIndex = savedFlights.value.findIndex(f => f.id === flight.id)
     if (existingIndex === -1) {
       savedFlights.value.push({
         ...flight,
         savedAt: new Date().toISOString(),
-        savedPrice: flight.price
+        savedPrice: flight.price.total
       })
       localStorage.setItem('saved_flights', JSON.stringify(savedFlights.value))
       return true
@@ -295,6 +308,7 @@ export const useFlightsStore = defineStore('flights', () => {
     return false
   }
 
+  // Price alerts
   const addPriceAlert = (flightId, targetPrice) => {
     const alert = {
       id: Date.now().toString(),
@@ -308,36 +322,60 @@ export const useFlightsStore = defineStore('flights', () => {
     return alert
   }
 
-  const checkPriceAlerts = () => {
-    // In a real app, this would check current prices against saved alerts
-    priceAlerts.value.forEach(alert => {
-      const flight = flights.value.find(f => f.id === alert.flightId)
-      if (flight && flight.price <= alert.targetPrice) {
-        // Trigger notification
-        console.log(`Price alert: Flight ${flight.flightNumber} is now $${flight.price}`)
+  const checkPriceAlerts = async () => {
+    // Check current prices against saved alerts
+    for (const alert of priceAlerts.value) {
+      if (!alert.isActive) continue
+
+      try {
+        // In a real implementation, this would check current prices
+        const flight = searchResults.value.find(f => f.id === alert.flightId)
+        if (flight && flight.price.total <= alert.targetPrice) {
+          // Trigger price drop notification
+          console.log(`Price Alert: Flight ${flight.flightNumber} dropped to $${flight.price.total}!`)
+          
+          // You could integrate with a notification service here
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(`Price Drop Alert!`, {
+              body: `Flight ${flight.flightNumber} is now $${flight.price.total}`,
+              icon: flight.airlineLogo
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error checking price alert:', error)
       }
-    })
+    }
   }
 
-  const addToRecentSearches = (criteria) => {
-    const recent = JSON.parse(localStorage.getItem('recent_searches') || '[]')
-    const newSearch = {
+  // Search history
+  const addToSearchHistory = (criteria, resultCount) => {
+    const historyItem = {
       id: Date.now(),
-      ...criteria,
+      origin: criteria.origin,
+      destination: criteria.destination,
+      departureDate: criteria.departureDate,
+      returnDate: criteria.returnDate,
+      passengers: criteria.passengers,
+      cabinClass: criteria.cabinClass,
+      tripType: criteria.tripType,
+      resultCount,
       searchedAt: new Date().toISOString()
     }
     
-    // Add to beginning and keep only last 10
-    recent.unshift(newSearch)
-    const uniqueSearches = recent.slice(0, 10)
+    // Add to beginning and keep only last 20 searches
+    searchHistory.value.unshift(historyItem)
+    searchHistory.value = searchHistory.value.slice(0, 20)
     
-    localStorage.setItem('recent_searches', JSON.stringify(uniqueSearches))
+    // Also save to localStorage for persistence
+    localStorage.setItem('search_history', JSON.stringify(searchHistory.value))
   }
 
   const getRecentSearches = () => {
-    return JSON.parse(localStorage.getItem('recent_searches') || '[]')
+    return searchHistory.value.slice(0, 10)
   }
 
+  // Filters and sorting
   const updateFilters = (newFilters) => {
     filters.value = { ...filters.value, ...newFilters }
   }
@@ -346,17 +384,48 @@ export const useFlightsStore = defineStore('flights', () => {
     sortBy.value = sortOption
   }
 
-  const getAirportSuggestions = (query) => {
-    if (!query || query.length < 2) return []
-    
-    return mockAirports.filter(airport =>
-      airport.code.toLowerCase().includes(query.toLowerCase()) ||
-      airport.name.toLowerCase().includes(query.toLowerCase()) ||
-      airport.city.toLowerCase().includes(query.toLowerCase())
-    )
+  const resetFilters = () => {
+    filters.value = {
+      airline: '',
+      stops: '',
+      priceRange: priceRange.value.length > 0 ? priceRange.value : [0, 5000],
+      timeOfDay: '',
+      duration: ''
+    }
   }
 
+  // Airport suggestions using real airport service
+  const getAirportSuggestions = (query) => {
+    return airportService.searchAirports(query, 8)
+  }
+
+  const getPopularAirports = () => {
+    return airportService.getPopularAirports()
+  }
+
+  // Flight status tracking
+  const getFlightStatus = async (flightNumber, date) => {
+    try {
+      return await airportService.getFlightStatus(flightNumber, date)
+    } catch (error) {
+      console.error('Error fetching flight status:', error)
+      return null
+    }
+  }
+
+  // Price tracking
+  const trackFlightPrices = async (origin, destination, departureDate) => {
+    try {
+      return await airportService.trackPrices(origin, destination, departureDate)
+    } catch (error) {
+      console.error('Error tracking flight prices:', error)
+      return null
+    }
+  }
+
+  // Data management
   const initializeFlightsData = () => {
+    // Load saved data from localStorage
     const savedFlightsData = localStorage.getItem('saved_flights')
     if (savedFlightsData) {
       savedFlights.value = JSON.parse(savedFlightsData)
@@ -366,19 +435,26 @@ export const useFlightsStore = defineStore('flights', () => {
     if (priceAlertsData) {
       priceAlerts.value = JSON.parse(priceAlertsData)
     }
+
+    const searchHistoryData = localStorage.getItem('search_history')
+    if (searchHistoryData) {
+      searchHistory.value = JSON.parse(searchHistoryData)
+    }
+
+    // Initialize periodic price checking
+    setInterval(checkPriceAlerts, 5 * 60 * 1000) // Check every 5 minutes
   }
 
   const clearSearch = () => {
     searchResults.value = []
     selectedFlight.value = null
-    filters.value = {
-      airline: '',
-      stops: '',
-      priceRange: [0, 2000],
-      timeOfDay: '',
-      duration: ''
-    }
+    resetFilters()
     sortBy.value = 'price'
+  }
+
+  const toggleDataSource = (useLive = true) => {
+    useLiveData.value = useLive
+    console.log(`Data source switched to: ${useLive ? 'Live Data' : 'Mock Data'}`)
   }
 
   return {
@@ -392,12 +468,15 @@ export const useFlightsStore = defineStore('flights', () => {
     sortBy,
     savedFlights,
     priceAlerts,
+    searchHistory,
+    useLiveData,
 
     // Getters
     filteredFlights,
     availableAirlines,
     priceRange,
     flightsByPrice,
+    searchStats,
 
     // Actions
     searchFlights,
@@ -406,12 +485,17 @@ export const useFlightsStore = defineStore('flights', () => {
     removeFromSavedFlights,
     addPriceAlert,
     checkPriceAlerts,
-    addToRecentSearches,
+    addToSearchHistory,
     getRecentSearches,
     updateFilters,
     updateSort,
+    resetFilters,
     getAirportSuggestions,
+    getPopularAirports,
+    getFlightStatus,
+    trackFlightPrices,
     initializeFlightsData,
-    clearSearch
+    clearSearch,
+    toggleDataSource
   }
 })

@@ -1,0 +1,243 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "select": "Select",
+    "all": "All",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "next": "Next",
+    "previous": "Previous",
+    "back": "Back",
+    "continue": "Continue",
+    "submit": "Submit",
+    "close": "Close",
+    "open": "Open"
+  },
+  "navigation": {
+    "home": "Home",
+    "search": "Search",
+    "booking": "Booking",
+    "bookingHistory": "Booking History",
+    "profile": "Profile",
+    "flightStatus": "Flight Status",
+    "help": "Help",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account to continue",
+      "email": "Email address",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot your password?",
+      "signIn": "Sign in",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create one here"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Join us to start booking flights",
+      "step1Title": "Personal Information",
+      "step2Title": "Travel Documents",
+      "step3Title": "Preferences",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email address",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "phone": "Phone Number",
+      "dateOfBirth": "Date of Birth",
+      "passportNumber": "Passport Number",
+      "nationality": "Nationality",
+      "passportExpiry": "Passport Expiry",
+      "currency": "Preferred Currency",
+      "language": "Language",
+      "timezone": "Timezone",
+      "notifications": "Email Notifications",
+      "newsletter": "Newsletter Updates",
+      "createAccount": "Create Account",
+      "alreadyHaveAccount": "Already have an account?",
+      "signInHere": "Sign in here"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email to receive reset instructions",
+      "email": "Email address",
+      "sendInstructions": "Send Instructions",
+      "backToLogin": "Back to login",
+      "checkEmail": "Check your email for reset instructions"
+    }
+  },
+  "flight": {
+    "search": {
+      "title": "Find Your Perfect Flight",
+      "origin": "From",
+      "destination": "To",
+      "departure": "Departure",
+      "return": "Return",
+      "passengers": "Passengers",
+      "cabinClass": "Cabin Class",
+      "searchFlights": "Search Flights",
+      "oneWay": "One Way",
+      "roundTrip": "Round Trip",
+      "multiCity": "Multi City"
+    },
+    "results": {
+      "title": "Search Results",
+      "found": "{count} flight found | {count} flights found",
+      "noResults": "No flights found",
+      "tryAgain": "Try adjusting your search criteria",
+      "newSearch": "New Search",
+      "duration": "Duration",
+      "stops": "Stops",
+      "nonstop": "Nonstop",
+      "oneStop": "1 stop",
+      "twoStops": "2 stops",
+      "selectFlight": "Select Flight",
+      "price": "Price",
+      "perPerson": "per person",
+      "seatsLeft": "{count} seat left | {count} seats left"
+    },
+    "details": {
+      "flightNumber": "Flight Number",
+      "aircraft": "Aircraft",
+      "baggage": "Baggage",
+      "amenities": "Amenities",
+      "features": "Features"
+    }
+  },
+  "booking": {
+    "steps": {
+      "selectFlight": "Select Flight",
+      "selectSeats": "Select Seats", 
+      "passengerInfo": "Passenger Info",
+      "extras": "Extras",
+      "payment": "Payment",
+      "confirmation": "Confirmation"
+    },
+    "seatSelection": {
+      "title": "Choose Your Seats",
+      "subtitle": "Select seats for all {count} passenger | Select seats for all {count} passengers",
+      "available": "Available",
+      "occupied": "Occupied",
+      "selected": "Selected",
+      "premium": "Premium",
+      "business": "Business",
+      "economy": "Economy",
+      "exitRow": "Exit Row",
+      "extra": "+ {amount}",
+      "timeRemaining": "Time remaining: {time}",
+      "selectSeat": "Select Seat",
+      "seatLocked": "This seat is temporarily locked"
+    },
+    "passenger": {
+      "title": "Passenger Information",
+      "subtitle": "Enter details for all passengers",
+      "passenger": "Passenger {number}",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "dateOfBirth": "Date of Birth",
+      "passportNumber": "Passport Number",
+      "nationality": "Nationality",
+      "specialRequests": "Special Requests"
+    },
+    "payment": {
+      "title": "Payment",
+      "subtitle": "Complete your booking",
+      "summary": "Booking Summary",
+      "total": "Total",
+      "taxes": "Taxes & Fees",
+      "cardNumber": "Card Number",
+      "expiryDate": "Expiry Date",
+      "cvv": "CVV",
+      "cardholderName": "Cardholder Name",
+      "billingAddress": "Billing Address",
+      "payNow": "Pay Now",
+      "securePayment": "Your payment is secured with SSL encryption"
+    },
+    "confirmation": {
+      "title": "Booking Confirmed!",
+      "subtitle": "Your flight has been successfully booked",
+      "bookingReference": "Booking Reference",
+      "checkEmail": "A confirmation email has been sent to your email address",
+      "downloadTicket": "Download Ticket",
+      "viewBooking": "View Booking",
+      "bookAnother": "Book Another Flight"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "personalInfo": "Personal Information",
+    "travelPreferences": "Travel Preferences",
+    "notifications": "Notification Settings",
+    "security": "Security",
+    "changePassword": "Change Password",
+    "deleteAccount": "Delete Account"
+  },
+  "bookingHistory": {
+    "title": "My Bookings",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "cancelled": "Cancelled",
+    "all": "All Bookings",
+    "checkIn": "Check In",
+    "cancel": "Cancel",
+    "modify": "Modify",
+    "download": "Download",
+    "status": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    }
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "invalidDate": "Please enter a valid date",
+    "networkError": "Network error. Please try again.",
+    "sessionExpired": "Your session has expired. Please login again."
+  },
+  "dateTime": {
+    "months": {
+      "january": "January",
+      "february": "February", 
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday", 
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    }
+  }
+}

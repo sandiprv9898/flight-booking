@@ -1,14 +1,18 @@
 <template>
   <div class="bg-white rounded-lg border border-neutral-200 overflow-hidden">
-    <div class="p-6 border-b border-neutral-200" :class="tierStyles.header">
+    <div class="p-6 border-b border-neutral-200" :style="{ backgroundColor: currentTierInfo.color }">
       <div class="flex items-center space-x-3">
-        <div class="w-12 h-12 rounded-lg flex items-center justify-center" :class="tierStyles.icon">
-          <TrophyIcon class="w-7 h-7" :class="tierStyles.iconColor" />
+        <div class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
+          <span class="text-2xl">{{ currentTierInfo.icon }}</span>
         </div>
         <div>
           <h2 class="text-xl font-bold text-white">FlightBook Rewards</h2>
-          <p class="text-sm opacity-90">{{ currentTier.name }} Member</p>
+          <p class="text-sm opacity-90">{{ currentTierInfo.name }} Member</p>
         </div>
+      </div>
+      <div class="mt-4 text-right">
+        <div class="text-2xl font-bold text-white">{{ formatPoints(userPoints) }}</div>
+        <div class="text-sm opacity-90">Available Points</div>
       </div>
     </div>
 
@@ -135,6 +139,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
+import { useLoyaltyStore } from '@/store/loyalty'
 import { 
   TrophyIcon,
   PlusIcon,
@@ -142,6 +147,8 @@ import {
   GiftIcon,
   AirplaneIcon
 } from '@heroicons/vue/24/outline'
+
+const loyaltyStore = useLoyaltyStore()
 
 // Mock loyalty data
 const loyaltyData = ref({
@@ -212,6 +219,19 @@ const availableRewards = ref([
     cost: 8000
   }
 ])
+
+// Computed properties using loyalty store
+const userPoints = computed(() => loyaltyStore.userPoints)
+const lifetimePoints = computed(() => loyaltyStore.lifetimePoints)
+const currentTierInfo = computed(() => loyaltyStore.currentTierInfo)
+const nextTier = computed(() => loyaltyStore.nextTier)
+const pointsToNextTier = computed(() => loyaltyStore.pointsToNextTier)
+const tierProgress = computed(() => loyaltyStore.tierProgress)
+const recentActivity = computed(() => loyaltyStore.recentActivity)
+const rewardsCatalog = computed(() => loyaltyStore.rewardsCatalog)
+
+// Methods
+const formatPoints = (points) => loyaltyStore.formatPoints(points)
 
 const currentTier = computed(() => {
   const miles = loyaltyData.value.miles

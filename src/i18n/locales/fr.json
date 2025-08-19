@@ -1,0 +1,68 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "save": "Sauvegarder",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "select": "Sélectionner",
+    "all": "Tout",
+    "none": "Aucun",
+    "yes": "Oui",
+    "no": "Non",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "back": "Retour",
+    "continue": "Continuer",
+    "submit": "Soumettre",
+    "close": "Fermer",
+    "open": "Ouvrir"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "search": "Rechercher",
+    "booking": "Réservation",
+    "bookingHistory": "Historique des Réservations",
+    "profile": "Profil",
+    "flightStatus": "Statut du Vol",
+    "help": "Aide",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "register": "S'inscrire"
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous à votre compte pour continuer",
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "rememberMe": "Se souvenir de moi",
+      "forgotPassword": "Mot de passe oublié ?",
+      "signIn": "Se connecter",
+      "noAccount": "Pas de compte ?",
+      "createAccount": "Créer un compte ici"
+    }
+  },
+  "flight": {
+    "search": {
+      "title": "Trouvez Votre Vol Parfait",
+      "origin": "De",
+      "destination": "À",
+      "departure": "Départ",
+      "return": "Retour",
+      "passengers": "Passagers",
+      "cabinClass": "Classe de Cabine",
+      "searchFlights": "Rechercher des Vols",
+      "oneWay": "Aller Simple",
+      "roundTrip": "Aller-Retour",
+      "multiCity": "Multi-Ville"
+    }
+  }
+}

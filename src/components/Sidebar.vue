@@ -99,6 +99,17 @@
           <span>Flight Status</span>
         </router-link>
 
+        <!-- Notifications -->
+        <router-link
+          to="/notifications"
+          class="nav-item"
+          :class="{ 'nav-item-active': $route.name === 'notifications' }"
+        >
+          <BellIcon class="nav-icon" />
+          <span>Notifications</span>
+          <span v-if="unreadNotifications > 0" class="ml-auto bg-red-100 text-red-600 text-xs font-medium px-2 py-1 rounded-full">{{ unreadNotifications > 9 ? '9+' : unreadNotifications }}</span>
+        </router-link>
+
         <!-- Travel History -->
         <router-link
           to="/booking-history"
@@ -200,6 +211,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useBookingStore } from '@/store/booking'
 import { useFlightsStore } from '@/store/flights'
+import { useNotificationsStore } from '@/store/notifications'
 import {
   XMarkIcon,
   MagnifyingGlassIcon,
@@ -208,6 +220,7 @@ import {
   CalendarDaysIcon,
   HeartIcon,
   ClockIcon,
+  BellIcon,
   BuildingOfficeIcon,
   ChevronUpDownIcon,
   CogIcon,
@@ -229,9 +242,11 @@ const emit = defineEmits(['close-mobile-menu'])
 const authStore = useAuthStore()
 const bookingStore = useBookingStore()
 const flightsStore = useFlightsStore()
+const notificationsStore = useNotificationsStore()
 const router = useRouter()
 
 const user = computed(() => authStore.user)
+const unreadNotifications = computed(() => notificationsStore.unreadCount)
 const currentWorkspace = computed(() => authStore.currentWorkspace)
 const userWorkspaces = computed(() => authStore.userWorkspaces)
 

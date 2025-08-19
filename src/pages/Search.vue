@@ -75,32 +75,55 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-6">
                   <!-- Airline Logo -->
-                  <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span class="text-sm font-bold text-gray-600">{{ flight.airlineCode }}</span>
+                  <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      v-if="flight.airline?.logo" 
+                      :src="flight.airline.logo" 
+                      :alt="flight.airline.name"
+                      class="w-8 h-8 object-contain"
+                      @error="$event.target.style.display = 'none'"
+                    />
+                    <span 
+                      v-else 
+                      class="text-sm font-bold text-gray-600"
+                    >
+                      {{ flight.airline?.code || 'XX' }}
+                    </span>
                   </div>
 
                   <!-- Flight Details -->
                   <div class="flex-1">
                     <div class="flex items-center space-x-4 mb-2">
                       <div class="text-center">
-                        <div class="text-lg font-bold text-gray-900">{{ flight.departure.time }}</div>
-                        <div class="text-sm text-gray-500">{{ flight.origin.code }}</div>
+                        <div class="text-lg font-bold text-gray-900">{{ flight.departureTime || formatTime(flight.departure?.time) }}</div>
+                        <div class="text-sm text-gray-500">{{ flight.origin?.code }}</div>
+                        <div class="text-xs text-gray-400">{{ flight.origin?.city }}</div>
                       </div>
                       
                       <div class="flex items-center space-x-2 flex-1">
                         <div class="h-0.5 bg-gray-300 flex-1"></div>
-                        <div class="text-sm text-gray-500">{{ flight.duration }}</div>
+                        <div class="flex flex-col items-center">
+                          <div class="text-sm text-gray-500">{{ flight.durationText || flight.duration?.formatted }}</div>
+                          <div class="text-xs text-gray-400">{{ flight.stopsText }}</div>
+                        </div>
                         <div class="h-0.5 bg-gray-300 flex-1"></div>
                       </div>
                       
                       <div class="text-center">
-                        <div class="text-lg font-bold text-gray-900">{{ flight.arrival.time }}</div>
-                        <div class="text-sm text-gray-500">{{ flight.destination.code }}</div>
+                        <div class="text-lg font-bold text-gray-900">{{ flight.arrivalTime || formatTime(flight.arrival?.time) }}</div>
+                        <div class="text-sm text-gray-500">{{ flight.destination?.code }}</div>
+                        <div class="text-xs text-gray-400">{{ flight.destination?.city }}</div>
                       </div>
                     </div>
                     
-                    <div class="text-sm text-gray-500">
-                      {{ flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}` }}
+                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                      <span class="font-medium">{{ flight.airline?.name }}</span>
+                      <span>{{ flight.flightNumber }}</span>
+                      <span v-if="flight.aircraft">{{ flight.aircraft.model || flight.aircraft }}</span>
+                      <span v-if="flight.isLive" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                        Live Data
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -108,11 +131,21 @@
                 <!-- Price and Select -->
                 <div class="text-right">
                   <div class="text-2xl font-bold text-gray-900 mb-1">
-                    ${{ flight.price }}
+                    {{ flight.currencySymbol || '$' }}{{ flight.displayPrice || flight.price?.total || flight.price }}
                   </div>
-                  <div class="text-sm text-gray-500 mb-3">per person</div>
-                  <Button variant="primary" @click="selectFlight(flight)">
-                    Select
+                  <div class="text-sm text-gray-500 mb-1">per person</div>
+                  <div v-if="flight.price?.taxes" class="text-xs text-gray-400 mb-2">
+                    +${{ flight.price.taxes }} taxes & fees
+                  </div>
+                  <div v-if="flight.isGoodDeal" class="text-xs text-green-600 mb-2">
+                    Great Deal!
+                  </div>
+                  <Button 
+                    variant="primary" 
+                    @click="selectFlight(flight)"
+                    :disabled="!flight.hasAvailability"
+                  >
+                    {{ flight.hasAvailability ? 'Select' : 'Sold Out' }}
                   </Button>
                 </div>
               </div>
@@ -147,7 +180,8 @@ const filters = ref({
   time: ''
 })
 
-const airlineOptions = [
+// Static airline options (will be replaced by dynamic ones)
+const staticAirlineOptions = [
   { value: '', label: 'All Airlines' },
   { value: 'BA', label: 'British Airways' },
   { value: 'VS', label: 'Virgin Atlantic' },
@@ -214,7 +248,20 @@ const updateFilters = () => {
 const formatSearchSummary = () => {
   if (!searchCriteria.value.origin) return 'No search criteria'
   
-  return `${searchCriteria.value.origin} → ${searchCriteria.value.destination} • ${formatDate(searchCriteria.value.departureDate)} • ${searchCriteria.value.passengers} passenger${searchCriteria.value.passengers > 1 ? 's' : ''}`
+  const origin = typeof searchCriteria.value.origin === 'string' ? searchCriteria.value.origin : searchCriteria.value.origin
+  const destination = typeof searchCriteria.value.destination === 'string' ? searchCriteria.value.destination : searchCriteria.value.destination
+  const passengerCount = searchCriteria.value.passengers?.adults || searchCriteria.value.passengers || 1
+  
+  return `${origin} → ${destination} • ${formatDate(searchCriteria.value.departureDate)} • ${passengerCount} passenger${passengerCount > 1 ? 's' : ''}`
+}
+
+const formatTime = (isoString) => {
+  if (!isoString) return ''
+  return new Date(isoString).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
 }
 
 const formatDate = (dateString) => {

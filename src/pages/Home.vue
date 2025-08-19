@@ -44,17 +44,19 @@
 
               <!-- Origin and Destination -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input
+                <AirportAutocomplete
                   v-model="searchForm.origin"
                   label="From"
                   placeholder="Origin city or airport"
                   required
+                  @select="handleOriginSelect"
                 />
-                <Input
+                <AirportAutocomplete
                   v-model="searchForm.destination"
                   label="To"
                   placeholder="Destination city or airport"
                   required
+                  @select="handleDestinationSelect"
                 />
               </div>
 
@@ -118,10 +120,11 @@
                 <div class="flex items-center space-x-4">
                   <div class="text-sm">
                     <div class="font-medium text-neutral-900">
-                      {{ search.origin }} → {{ search.destination }}
+                      {{ typeof search.origin === 'string' ? search.origin : search.origin?.code || 'Unknown' }} → 
+                      {{ typeof search.destination === 'string' ? search.destination : search.destination?.code || 'Unknown' }}
                     </div>
                     <div class="text-neutral-500 text-xs">
-                      {{ formatDate(search.departureDate) }} • {{ search.passengers }} passenger{{ search.passengers > 1 ? 's' : '' }} • {{ search.cabinClass }}
+                      {{ formatDate(search.departureDate) }} • {{ search.passengers?.adults || search.passengers || 1 }} passenger{{ (search.passengers?.adults || search.passengers || 1) > 1 ? 's' : '' }} • {{ search.cabinClass }}
                     </div>
                   </div>
                 </div>
@@ -164,7 +167,9 @@ import Header from '@/components/Header.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Select from '@/components/ui/Select.vue'
+import AirportAutocomplete from '@/components/ui/AirportAutocomplete.vue'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import airportService from '@/services/airportService'
 
 const router = useRouter()
 const flightsStore = useFlightsStore()
@@ -174,8 +179,8 @@ const loading = ref(false)
 
 const searchForm = ref({
   tripType: 'round-trip',
-  origin: '',
-  destination: '',
+  origin: null,
+  destination: null,
   departureDate: '',
   returnDate: '',
   passengers: '1',
@@ -203,7 +208,7 @@ const recentSearches = computed(() => {
 
 const handleSearch = async () => {
   // Validate form
-  if (!searchForm.value.origin || !searchForm.value.destination || !searchForm.value.departureDate) {
+  if (!searchForm.value.origin?.code || !searchForm.value.destination?.code || !searchForm.value.departureDate) {
     alert('Please fill in all required fields')
     return
   }
@@ -212,8 +217,17 @@ const handleSearch = async () => {
   
   try {
     const searchCriteria = {
-      ...searchForm.value,
-      passengers: parseInt(searchForm.value.passengers)
+      origin: searchForm.value.origin.code,
+      destination: searchForm.value.destination.code,
+      departureDate: searchForm.value.departureDate,
+      returnDate: searchForm.value.returnDate,
+      passengers: {
+        adults: parseInt(searchForm.value.passengers),
+        children: 0,
+        infants: 0
+      },
+      cabinClass: searchForm.value.cabinClass,
+      tripType: searchForm.value.tripType
     }
     
     const result = await flightsStore.searchFlights(searchCriteria)
@@ -231,25 +245,40 @@ const handleSearch = async () => {
   }
 }
 
-const popularDestinations = ref([
-  { code: 'LHR', city: 'London', flag: '🇬🇧', price: 450 },
-  { code: 'CDG', city: 'Paris', flag: '🇫🇷', price: 380 },
-  { code: 'NRT', city: 'Tokyo', flag: '🇯🇵', price: 850 },
-  { code: 'DXB', city: 'Dubai', flag: '🇦🇪', price: 520 },
-  { code: 'SYD', city: 'Sydney', flag: '🇦🇺', price: 920 },
-  { code: 'FRA', city: 'Frankfurt', flag: '🇩🇪', price: 420 },
-  { code: 'SIN', city: 'Singapore', flag: '🇸🇬', price: 780 },
-  { code: 'YYZ', city: 'Toronto', flag: '🇨🇦', price: 340 }
-])
+const popularDestinations = ref([])
+
+// Country flags mapping
+const countryFlags = {
+  'United Kingdom': '🇬🇧',
+  'France': '🇫🇷',
+  'Japan': '🇯🇵',
+  'United Arab Emirates': '🇦🇪',
+  'Australia': '🇦🇺',
+  'Germany': '🇩🇪',
+  'Singapore': '🇸🇬',
+  'Canada': '🇨🇦',
+  'United States': '🇺🇸',
+  'Spain': '🇪🇸',
+  'Italy': '🇮🇹',
+  'Netherlands': '🇳🇱'
+}
 
 const handleRecentSearch = async (search) => {
+  const originAirport = typeof search.origin === 'string' 
+    ? airportService.getAirport(search.origin) 
+    : search.origin
+
+  const destinationAirport = typeof search.destination === 'string' 
+    ? airportService.getAirport(search.destination) 
+    : search.destination
+
   searchForm.value = {
     tripType: search.tripType || 'round-trip',
-    origin: search.origin,
-    destination: search.destination,
+    origin: originAirport,
+    destination: destinationAirport,
     departureDate: search.departureDate,
     returnDate: search.returnDate || '',
-    passengers: search.passengers.toString(),
+    passengers: search.passengers?.toString() || '1',
     cabinClass: search.cabinClass || 'economy'
   }
   
@@ -257,7 +286,18 @@ const handleRecentSearch = async (search) => {
 }
 
 const selectDestination = (destination) => {
-  searchForm.value.destination = destination.code
+  const airport = airportService.getAirport(destination.code)
+  if (airport) {
+    searchForm.value.destination = airport
+  }
+}
+
+const handleOriginSelect = (airport) => {
+  console.log('Origin selected:', airport)
+}
+
+const handleDestinationSelect = (airport) => {
+  console.log('Destination selected:', airport)
 }
 
 const formatDate = (dateString) => {
@@ -280,5 +320,13 @@ onMounted(() => {
   const returnDate = new Date(tomorrow)
   returnDate.setDate(returnDate.getDate() + 7)
   searchForm.value.returnDate = returnDate.toISOString().split('T')[0]
+
+  // Initialize popular destinations with real data
+  const popularAirports = airportService.getPopularAirports()
+  popularDestinations.value = popularAirports.map(airport => ({
+    ...airport,
+    flag: countryFlags[airport.country] || '🌍',
+    price: Math.floor(Math.random() * 800) + 200 // Random price for demo
+  }))
 })
 </script>

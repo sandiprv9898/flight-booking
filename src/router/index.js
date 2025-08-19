@@ -51,12 +51,20 @@ const router = createRouter({
       name: 'flight-status',
       component: () => import('@/pages/FlightStatus.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('@/pages/Notifications.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
 
 // Navigation guards
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
+  // Import inside guard to ensure pinia is initialized
+  const { useAuthStore } = await import('@/store/auth')
   const authStore = useAuthStore()
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

@@ -1,0 +1,34 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "search": "Suchen",
+    "next": "Weiter",
+    "back": "Zurück",
+    "continue": "Fortfahren"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "search": "Suchen",
+    "booking": "Buchung",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "login": "Anmelden"
+  },
+  "flight": {
+    "search": {
+      "title": "Finden Sie Ihren Perfekten Flug",
+      "origin": "Von",
+      "destination": "Nach",
+      "departure": "Abflug",
+      "return": "Rückflug",
+      "passengers": "Passagiere",
+      "searchFlights": "Flüge Suchen"
+    }
+  }
+}

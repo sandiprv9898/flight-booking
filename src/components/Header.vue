@@ -125,6 +125,7 @@
               </div>
             </a>
 
+
             <a
               href="#"
               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -205,7 +206,7 @@
                 {{ notification.message }}
               </p>
               <p class="text-xs text-gray-400 mt-1">
-                {{ notification.time }}
+                {{ notificationsStore.formatRelativeTime(notification.timestamp) }}
               </p>
             </div>
           </div>
@@ -213,12 +214,13 @@
       </div>
       
       <div class="p-4 border-t border-gray-200">
-        <a
-          href="#"
+        <router-link
+          to="/notifications"
           class="text-sm text-primary-600 hover:text-primary-500"
+          @click="isNotificationsOpen = false"
         >
           View all notifications
-        </a>
+        </router-link>
       </div>
     </div>
   </header>
@@ -228,6 +230,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useNotificationsStore } from '@/store/notifications'
 import WorkspaceSwitcher from './WorkspaceSwitcher.vue'
 import {
   Bars3Icon,
@@ -247,6 +250,7 @@ defineEmits(['toggle-mobile-menu'])
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
 
 const isUserMenuOpen = ref(false)
 const isNotificationsOpen = ref(false)
@@ -275,34 +279,9 @@ const breadcrumbs = computed(() => {
   return []
 })
 
-// Mock notifications data
-const notifications = ref([
-  {
-    id: 1,
-    title: 'Booking Confirmation',
-    message: 'Your flight to New York has been confirmed',
-    time: '2 minutes ago',
-    read: false
-  },
-  {
-    id: 2,
-    title: 'Price Alert',
-    message: 'Price dropped for London flights',
-    time: '1 hour ago',
-    read: false
-  },
-  {
-    id: 3,
-    title: 'Check-in Reminder',
-    message: 'Check-in opens in 24 hours',
-    time: '3 hours ago',
-    read: true
-  }
-])
-
-const unreadNotifications = computed(() => {
-  return notifications.value.filter(n => !n.read).length
-})
+// Use notifications from store
+const notifications = computed(() => notificationsStore.notifications.slice(0, 5)) // Show only first 5 in dropdown
+const unreadNotifications = computed(() => notificationsStore.unreadCount)
 
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
@@ -319,7 +298,7 @@ const closeUserMenu = () => {
 }
 
 const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
+  notificationsStore.markAllAsRead()
 }
 
 const handleLogout = () => {
@@ -337,6 +316,8 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  // Initialize notifications when header mounts
+  notificationsStore.initializeNotifications()
 })
 
 onUnmounted(() => {

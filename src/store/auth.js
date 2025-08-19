@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { detectUserCurrency } from '@/utils/currency'
 
 // Mock data for development
 const mockUsers = [
@@ -342,7 +343,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const initializeAuth = () => {
+  const initializeAuth = async () => {
     // Check for stored auth data on app initialization
     const storedUser = localStorage.getItem('auth_user')
     const storedWorkspace = localStorage.getItem('current_workspace')
@@ -353,6 +354,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     if (storedWorkspace) {
       currentWorkspace.value = JSON.parse(storedWorkspace)
+    }
+
+    // Detect and set user's currency if not already set
+    if (!storedUser && !registrationData.value.step3.currency) {
+      try {
+        const detectedCurrency = await detectUserCurrency()
+        registrationData.value.step3.currency = detectedCurrency
+      } catch {
+        registrationData.value.step3.currency = 'USD'
+      }
     }
   }
 

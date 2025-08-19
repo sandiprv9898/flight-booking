@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { bookingSessionAPI } from '@/services/bookingSessionApi'
+import { completedBookingsAPI } from '@/services/completedBookingsApi'
+import { useAuthStore } from './auth'
 
 // Mock seat map data
 const mockSeatMap = {
@@ -114,6 +117,13 @@ export const useBookingStore = defineStore('booking', () => {
   const seatLockTimer = ref(null)
   const seatLockExpiry = ref(null)
   const loading = ref(false)
+  
+  // Session management
+  const sessionId = ref(null)
+  const sessionExpiresAt = ref(null)
+  const autoSaveEnabled = ref(true)
+  const lastSavedAt = ref(null)
+  const syncInProgress = ref(false)
 
   // Getters
   const totalSteps = computed(() => 6)
@@ -218,9 +228,20 @@ export const useBookingStore = defineStore('booking', () => {
   })
 
   // Actions
-  const setCurrentStep = (step) => {
+  const setCurrentStep = async (step) => {
     if (step >= 1 && step <= totalSteps.value) {
       currentStep.value = step
+      
+      // Auto-save session when step changes
+      if (autoSaveEnabled.value && sessionId.value) {
+        try {
+          await bookingSessionAPI.updateStep(sessionId.value, step)
+        } catch (error) {
+          console.warn('Failed to update step on server:', error.message)
+        }
+      }
+      
+      await saveSession()
     }
   }
 
@@ -236,11 +257,14 @@ export const useBookingStore = defineStore('booking', () => {
     }
   }
 
-  const setSelectedFlight = (flight) => {
+  const setSelectedFlight = async (flight) => {
     selectedFlight.value = flight
     // Initialize passengers based on search criteria
     const passengerCount = flight.searchCriteria?.passengers || 1
     initializePassengers(passengerCount)
+    
+    // Auto-save when flight is selected
+    await saveSession()
   }
 
   const initializePassengers = (count) => {
@@ -263,7 +287,7 @@ export const useBookingStore = defineStore('booking', () => {
     }))
   }
 
-  const selectSeat = (seat) => {
+  const selectSeat = async (seat) => {
     if (!seat.isAvailable || seat.isSelected) return false
 
     // Check if passenger limit reached
@@ -279,6 +303,35 @@ export const useBookingStore = defineStore('booking', () => {
       
       // Start seat lock timer (15 minutes)
       startSeatLockTimer()
+      
+      // Try to reserve seat on server
+      if (sessionId.value) {
+        try {
+          const seatsToReserve = selectedSeats.value.map(seat => ({
+            seatId: seat.id,
+            seatNumber: seat.seatNumber,
+            section: seat.section,
+            price: seat.price,
+            isWindow: seat.isWindow,
+            isAisle: seat.isAisle
+          }))
+          
+          await bookingSessionAPI.reserveSeats(sessionId.value, seatsToReserve)
+          console.log('✅ Seat reserved on server:', seat.seatNumber)
+        } catch (error) {
+          console.warn('⚠️ Failed to reserve seat on server:', error.message)
+          
+          if (error.message.includes('no longer available')) {
+            // Seat is no longer available, revert selection
+            seatMap.value[seatIndex].isSelected = false
+            selectedSeats.value.pop()
+            return false
+          }
+        }
+      }
+      
+      // Auto-save session
+      await saveSession()
       
       return true
     }
@@ -303,6 +356,22 @@ export const useBookingStore = defineStore('booking', () => {
     if (selectedSeats.value.length === 0) {
       clearSeatLockTimer()
     }
+  }
+
+  const clearAllSeats = () => {
+    // Clear all selected seats
+    selectedSeats.value.forEach(seat => {
+      const seatIndex = seatMap.value.findIndex(s => s.id === seat.id)
+      if (seatIndex > -1) {
+        seatMap.value[seatIndex].isSelected = false
+      }
+    })
+
+    // Clear the selected seats array
+    selectedSeats.value = []
+
+    // Clear the seat lock timer
+    clearSeatLockTimer()
   }
 
   const startSeatLockTimer = () => {
@@ -394,27 +463,104 @@ export const useBookingStore = defineStore('booking', () => {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      const booking = {
-        ...currentBooking.value,
-        id: `FB${Date.now().toString().slice(-6)}`,
-        bookingReference: generateBookingReference(),
+      const bookingReference = generateBookingReference()
+      
+      const bookingData = {
+        bookingReference,
+        flight: selectedFlight.value,
+        returnFlight: returnFlight.value,
+        seats: selectedSeats.value.map(seat => ({
+          seatId: seat.id,
+          seatNumber: seat.seatNumber,
+          section: seat.section,
+          price: seat.price,
+          isWindow: seat.isWindow,
+          isAisle: seat.isAisle
+        })),
+        passengers: passengers.value,
+        contact: contactInfo.value,
+        payment: {
+          method: paymentInfo.value.method,
+          cardLast4: paymentInfo.value.cardNumber?.slice(-4) || '',
+          cardBrand: 'visa', // This would come from payment processor
+          billingAddress: paymentInfo.value.billingAddress
+        },
+        extras: bookingExtras.value,
+        pricing: {
+          baseFare: baseFareTotal.value,
+          seats: seatsTotal.value,
+          extras: extrasTotal.value,
+          taxes: taxesAndFees.value,
+          discount: appliedDiscount.value,
+          total: totalPrice.value
+        },
+        promoCode: promoCode.value,
+        appliedDiscount: appliedDiscount.value,
+        tickets: generateTickets(),
         status: 'confirmed',
-        confirmedAt: new Date().toISOString(),
-        tickets: generateTickets()
+        confirmedAt: new Date().toISOString()
       }
       
-      bookings.value.push(booking)
-      localStorage.setItem('user_bookings', JSON.stringify(bookings.value))
+      // Save booking to backend
+      const result = await completedBookingsAPI.completeBooking(sessionId.value, bookingData)
+      const booking = result.booking
       
       // Clear seat lock timer
       clearSeatLockTimer()
+      
+      // Send booking confirmation notification
+      try {
+        const { useNotificationsStore } = await import('./notifications')
+        const notificationsStore = useNotificationsStore()
+        
+        const flightNumber = selectedFlight.value?.flightNumber || 'N/A'
+        const destination = selectedFlight.value?.destination?.city || selectedFlight.value?.destination?.code || 'destination'
+        const departureDate = selectedFlight.value?.departureTime ? new Date(selectedFlight.value.departureTime).toLocaleDateString() : 'N/A'
+        
+        notificationsStore.addNotification({
+          type: 'BOOKING_CONFIRMED',
+          title: 'Booking Confirmed',
+          message: `Your flight booking ${booking.bookingReference} to ${destination} has been confirmed. Check-in opens 24 hours before departure.`,
+          actionable: true,
+          actions: [
+            { label: 'View Booking', action: 'view_booking', data: { bookingReference: booking.bookingReference } },
+            { label: 'Add to Calendar', action: 'add_calendar', data: { bookingReference: booking.bookingReference } }
+          ],
+          metadata: {
+            bookingId: booking.bookingId,
+            bookingReference: booking.bookingReference,
+            flightNumber,
+            destination,
+            departureDate
+          }
+        })
+
+        // Add loyalty points notification
+        const pointsEarned = Math.floor(totalPrice.value * 0.1) // 10% of price as points
+        notificationsStore.addNotification({
+          type: 'LOYALTY_POINTS',
+          title: 'Points Earned',
+          message: `You earned ${pointsEarned} loyalty points from your booking to ${destination}!`,
+          actionable: true,
+          actions: [
+            { label: 'View Points', action: 'view_loyalty', data: {} }
+          ],
+          metadata: {
+            pointsEarned,
+            bookingReference: booking.bookingReference
+          }
+        })
+      } catch (error) {
+        console.log('Could not send notifications:', error)
+      }
       
       // Move to confirmation step
       currentStep.value = 6
       
       return { success: true, booking }
     } catch (error) {
-      return { success: false, error: 'Booking failed. Please try again.' }
+      console.error('Booking completion failed:', error)
+      return { success: false, error: error.message || 'Booking failed. Please try again.' }
     } finally {
       loading.value = false
     }
@@ -447,23 +593,108 @@ export const useBookingStore = defineStore('booking', () => {
     return `FB-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`
   }
 
-  const getBookingHistory = () => {
-    const storedBookings = localStorage.getItem('user_bookings')
-    if (storedBookings) {
-      bookings.value = JSON.parse(storedBookings)
+  const getBookingHistory = async (limit = 20, offset = 0) => {
+    try {
+      loading.value = true
+      const result = await completedBookingsAPI.getBookingHistory(limit, offset)
+      
+      // Update local bookings array for reactivity
+      if (offset === 0) {
+        bookings.value = result.bookings
+      } else {
+        bookings.value.push(...result.bookings)
+      }
+      
+      return {
+        bookings: result.bookings,
+        pagination: result.pagination
+      }
+    } catch (error) {
+      console.error('Failed to get booking history:', error)
+      
+      // Show user notification
+      try {
+        const { useNotificationsStore } = await import('./notifications')
+        const notificationsStore = useNotificationsStore()
+        
+        notificationsStore.addNotification({
+          type: 'LOAD_ERROR',
+          title: 'Connection Issue',
+          message: 'Unable to load your booking history. Please check your connection.',
+          actionable: true,
+          actions: [
+            { label: 'Retry', action: 'retry_history_load', data: { limit, offset } }
+          ]
+        })
+      } catch (notifError) {
+        console.warn('Could not show notification:', notifError)
+      }
+      
+      return { bookings: [], pagination: { total: 0, hasMore: false } }
+    } finally {
+      loading.value = false
     }
-    return bookings.value
   }
 
-  const cancelBooking = async (bookingId) => {
-    const bookingIndex = bookings.value.findIndex(b => b.id === bookingId)
-    if (bookingIndex > -1) {
-      bookings.value[bookingIndex].status = 'cancelled'
-      bookings.value[bookingIndex].cancelledAt = new Date().toISOString()
-      localStorage.setItem('user_bookings', JSON.stringify(bookings.value))
-      return true
+  const cancelBooking = async (bookingReference) => {
+    try {
+      loading.value = true
+      const result = await completedBookingsAPI.cancelBooking(bookingReference)
+      
+      // Update local bookings array
+      const bookingIndex = bookings.value.findIndex(b => b.bookingReference === bookingReference)
+      if (bookingIndex > -1) {
+        bookings.value[bookingIndex].status = 'cancelled'
+        bookings.value[bookingIndex].cancelledAt = result.booking.cancelledAt
+      }
+      
+      // Send cancellation notification
+      try {
+        const { useNotificationsStore } = await import('./notifications')
+        const notificationsStore = useNotificationsStore()
+        
+        notificationsStore.addNotification({
+          type: 'BOOKING_CANCELLED',
+          title: 'Booking Cancelled',
+          message: `Your booking ${bookingReference} has been cancelled. Refund will be processed within 3-5 business days.`,
+          actionable: true,
+          actions: [
+            { label: 'View Booking', action: 'view_booking', data: { bookingReference } }
+          ],
+          metadata: {
+            bookingReference
+          }
+        })
+      } catch (error) {
+        console.log('Could not send notification:', error)
+      }
+      
+      return { success: true, booking: result.booking }
+    } catch (error) {
+      console.error('Failed to cancel booking:', error)
+      
+      // Show user notification
+      try {
+        const { useNotificationsStore } = await import('./notifications')
+        const notificationsStore = useNotificationsStore()
+        
+        notificationsStore.addNotification({
+          type: 'CANCEL_ERROR',
+          title: 'Cancellation Failed',
+          message: error.message || 'Unable to cancel booking. Please try again or contact support.',
+          actionable: true,
+          actions: [
+            { label: 'Retry', action: 'retry_cancel', data: { bookingReference } }
+          ]
+        })
+      } catch (notifError) {
+        console.warn('Could not show notification:', notifError)
+      }
+      
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
     }
-    return false
   }
 
   const resetBooking = () => {
@@ -499,11 +730,306 @@ export const useBookingStore = defineStore('booking', () => {
     clearSeatLockTimer()
   }
 
-  const initializeBookingData = () => {
-    const storedBookings = localStorage.getItem('user_bookings')
-    if (storedBookings) {
-      bookings.value = JSON.parse(storedBookings)
+  const initializeBookingData = async () => {
+    // Load booking history from backend instead of localStorage
+    try {
+      await getBookingHistory(10, 0) // Load first 10 bookings
+      console.log('✅ Booking data initialized from backend')
+    } catch (error) {
+      console.warn('⚠️ Failed to initialize booking data:', error.message)
+      // Set empty bookings array as fallback
+      bookings.value = []
     }
+  }
+
+  // Session Management Functions
+  const generateSessionId = () => {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+
+  const getSessionData = () => {
+    return {
+      sessionId: sessionId.value,
+      currentStep: currentStep.value,
+      selectedFlight: selectedFlight.value,
+      selectedSeats: selectedSeats.value.map(seat => ({
+        seatId: seat.id,
+        seatNumber: seat.seatNumber,
+        section: seat.section,
+        price: seat.price,
+        isWindow: seat.isWindow,
+        isAisle: seat.isAisle
+      })),
+      passengers: passengers.value,
+      contactInfo: contactInfo.value,
+      paymentInfo: {
+        ...paymentInfo.value,
+        // Never send actual payment details to server
+        cardNumber: '',
+        cvv: '',
+        cardLast4: paymentInfo.value.cardNumber ? paymentInfo.value.cardNumber.slice(-4) : '',
+      },
+      bookingExtras: bookingExtras.value,
+      pricing: {
+        baseFare: baseFareTotal.value,
+        seats: seatsTotal.value,
+        extras: extrasTotal.value,
+        taxes: taxesAndFees.value,
+        discount: appliedDiscount.value,
+        total: totalPrice.value,
+        lastUpdated: new Date().toISOString()
+      },
+      promoCode: promoCode.value,
+      appliedDiscount: appliedDiscount.value
+    }
+  }
+
+  const saveSession = async (forceSync = false) => {
+    if (syncInProgress.value && !forceSync) return
+
+    try {
+      syncInProgress.value = true
+
+      if (!sessionId.value) {
+        sessionId.value = generateSessionId()
+      }
+
+      const sessionData = getSessionData()
+      
+      // Save only to backend - no localStorage
+      const result = await bookingSessionAPI.saveSession(sessionData)
+      sessionExpiresAt.value = result.session?.expiresAt
+      lastSavedAt.value = new Date().toISOString()
+      
+      console.log('✅ Booking session saved to backend:', result.session?.sessionId)
+
+    } catch (error) {
+      console.error('❌ Failed to save booking session:', error)
+      
+      // Show user notification for network issues
+      if (error.message.includes('Network error') || error.message.includes('fetch')) {
+        // Import notifications store dynamically
+        try {
+          const { useNotificationsStore } = await import('./notifications')
+          const notificationsStore = useNotificationsStore()
+          
+          notificationsStore.addNotification({
+            type: 'NETWORK_ERROR',
+            title: 'Connection Issue',
+            message: 'Unable to save your progress. Please check your connection and try again.',
+            actionable: true,
+            actions: [
+              { label: 'Retry Save', action: 'retry_save', data: { sessionId: sessionId.value } }
+            ]
+          })
+        } catch (notifError) {
+          console.warn('Could not show notification:', notifError)
+        }
+      }
+      
+      throw error // Re-throw to let calling code handle
+    } finally {
+      syncInProgress.value = false
+    }
+  }
+
+  const loadSession = async (sessionIdToLoad = null) => {
+    try {
+      loading.value = true
+      
+      // Try to get session ID from URL parameter or provided parameter
+      const targetSessionId = sessionIdToLoad || 
+                             new URLSearchParams(window.location.search).get('sessionId') ||
+                             sessionId.value
+
+      if (!targetSessionId) {
+        console.log('📝 No session ID provided, starting fresh')
+        return false
+      }
+
+      console.log('🔄 Loading booking session from backend:', targetSessionId)
+
+      // Load only from backend server
+      const result = await bookingSessionAPI.getSession(targetSessionId)
+      const session = result.session
+
+      if (!session) {
+        console.log('❌ Session not found on server')
+        return false
+      }
+
+      // Restore session data
+      sessionId.value = session.sessionId
+      currentStep.value = session.currentStep || 1
+      selectedFlight.value = session.selectedFlight
+      passengers.value = session.passengers || []
+      contactInfo.value = session.contactInfo || contactInfo.value
+      bookingExtras.value = session.bookingExtras || bookingExtras.value
+      promoCode.value = session.promoCode || ''
+      appliedDiscount.value = session.appliedDiscount || 0
+      sessionExpiresAt.value = session.expiresAt
+
+      // Restore selected seats if not expired
+      if (session.selectedSeats && session.selectedSeats.length > 0) {
+        const validSeats = session.selectedSeats.filter(seat => 
+          new Date(seat.expiresAt) > new Date()
+        )
+        
+        if (validSeats.length > 0) {
+          // Restore seats in local seat map
+          selectedSeats.value = validSeats.map(seat => {
+            const localSeat = seatMap.value.find(s => s.id === seat.seatId)
+            if (localSeat) {
+              localSeat.isSelected = true
+              return { ...localSeat, ...seat }
+            }
+            return seat
+          })
+        } else {
+          console.log('⏰ All selected seats have expired')
+          // Show notification about expired seats
+          try {
+            const { useNotificationsStore } = await import('./notifications')
+            const notificationsStore = useNotificationsStore()
+            
+            notificationsStore.addNotification({
+              type: 'SEATS_EXPIRED',
+              title: 'Seats Expired',
+              message: 'Your previously selected seats have expired. Please select new seats.',
+              actionable: true,
+              actions: [
+                { label: 'Select Seats', action: 'goto_step', data: { step: 2 } }
+              ]
+            })
+          } catch (notifError) {
+            console.warn('Could not show notification:', notifError)
+          }
+        }
+      }
+
+      // Initialize passengers if flight is selected
+      if (selectedFlight.value && passengers.value.length === 0) {
+        const passengerCount = selectedFlight.value.searchCriteria?.passengers || 1
+        initializePassengers(passengerCount)
+      }
+
+      console.log('✅ Session restored from backend:', {
+        sessionId: sessionId.value,
+        step: currentStep.value,
+        flight: selectedFlight.value?.flightNumber,
+        seats: selectedSeats.value.length,
+        passengers: passengers.value.length,
+        expiresAt: sessionExpiresAt.value
+      })
+
+      return true
+
+    } catch (error) {
+      console.error('❌ Failed to load session from backend:', error)
+      
+      // Show user-friendly error
+      if (error.message.includes('Network error') || error.message.includes('fetch')) {
+        try {
+          const { useNotificationsStore } = await import('./notifications')
+          const notificationsStore = useNotificationsStore()
+          
+          notificationsStore.addNotification({
+            type: 'LOAD_ERROR',
+            title: 'Connection Issue',
+            message: 'Unable to load your booking session. Please check your connection.',
+            actionable: true,
+            actions: [
+              { label: 'Retry Load', action: 'retry_load', data: { sessionId: targetSessionId } },
+              { label: 'Start Over', action: 'start_fresh', data: {} }
+            ]
+          })
+        } catch (notifError) {
+          console.warn('Could not show notification:', notifError)
+        }
+      }
+      
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const validateCurrentSession = async () => {
+    if (!sessionId.value) return
+
+    try {
+      // Check seat availability and pricing
+      const result = await bookingSessionAPI.validatePricing(sessionId.value)
+      
+      if (result.hasChanges && result.priceChanges.length > 0) {
+        // Handle price changes
+        result.priceChanges.forEach(change => {
+          console.log('💰 Price change detected:', change)
+          
+          // Update pricing in UI
+          if (change.type === 'flight' && selectedFlight.value) {
+            selectedFlight.value.price = change.newPrice
+          }
+        })
+
+        // Show user notification about price changes
+        const { useNotificationsStore } = await import('./notifications')
+        const notificationsStore = useNotificationsStore()
+        
+        notificationsStore.addNotification({
+          type: 'PRICE_UPDATE',
+          title: 'Price Update',
+          message: `Flight prices have been updated. Your new total is $${result.pricing.total}`,
+          actionable: true,
+          actions: [
+            { label: 'Review Changes', action: 'review_pricing', data: { changes: result.priceChanges } }
+          ]
+        })
+
+        return { hasChanges: true, changes: result.priceChanges }
+      }
+
+      return { hasChanges: false }
+      
+    } catch (error) {
+      console.error('❌ Session validation failed:', error)
+      return { hasChanges: false, error }
+    }
+  }
+
+  const extendSession = async () => {
+    if (!sessionId.value) return
+
+    try {
+      await bookingSessionAPI.extendSeatReservation(sessionId.value)
+      console.log('✅ Session extended')
+      
+      // Update local expiry time
+      if (seatLockExpiry.value) {
+        seatLockExpiry.value = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to extend session:', error)
+    }
+  }
+
+  const clearSession = async () => {
+    if (sessionId.value) {
+      try {
+        await bookingSessionAPI.cancelSession(sessionId.value)
+        console.log('✅ Session cancelled on backend')
+      } catch (error) {
+        console.log('⚠️ Failed to cancel server session:', error.message)
+      }
+    }
+
+    // Clear local state only
+    sessionId.value = null
+    sessionExpiresAt.value = null
+    lastSavedAt.value = null
+    
+    console.log('🗑️ Session cleared')
   }
 
   return {
@@ -522,6 +1048,13 @@ export const useBookingStore = defineStore('booking', () => {
     seatMap,
     seatLockExpiry,
     loading,
+    
+    // Session management state
+    sessionId,
+    sessionExpiresAt,
+    autoSaveEnabled,
+    lastSavedAt,
+    syncInProgress,
 
     // Getters
     totalSteps,
@@ -546,6 +1079,7 @@ export const useBookingStore = defineStore('booking', () => {
     initializePassengers,
     selectSeat,
     deselectSeat,
+    clearAllSeats,
     startSeatLockTimer,
     clearSeatLockTimer,
     updatePassenger,
@@ -558,6 +1092,13 @@ export const useBookingStore = defineStore('booking', () => {
     getBookingHistory,
     cancelBooking,
     resetBooking,
-    initializeBookingData
+    initializeBookingData,
+    
+    // Session management actions
+    saveSession,
+    loadSession,
+    validateCurrentSession,
+    extendSession,
+    clearSession
   }
 })
